@@ -58,13 +58,6 @@ const problems = [
   { label: "Finally", title: "And it is often unclear...", detail: "Do you need a follow-up? Where are your reports?" },
 ];
 
-const heroChips = [
-  { icon: "📋", label: "Test Order Sent" },
-  { icon: "📊", label: "Report Ready" },
-  { icon: "🩺", label: "Doctor Notified" },
-  { icon: "💊", label: "Prescription Issued" },
-  { icon: "📁", label: "Medical History" },
-];
 
 export default function Home() {
   const [activeRole, setActiveRole] = useState<Role>("patient");
@@ -154,34 +147,62 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right — floating chips */}
-            <div className="relative h-80 md:h-96 hidden md:block">
-              {/* Central circle */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full icon-box-blue flex flex-col items-center justify-center shadow-xl shadow-blue-300/40">
-                <span className="text-3xl">🏥</span>
-                <span className="text-white text-xs font-bold mt-1">Outlynk</span>
+            {/* Right — animated product flow */}
+            <div className="hidden md:flex flex-col gap-3 animate-fade-up-d2">
+
+              {/* Card header */}
+              <div className="bg-white rounded-2xl border border-blue-100 shadow-md p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                    <span className="text-sm font-bold text-slate-700">Outlynk Activity</span>
+                  </div>
+                  <span className="text-xs text-slate-400">Live</span>
+                </div>
+
+                {/* Step 1 */}
+                <div className="flex items-start gap-3 pb-3 border-b border-slate-50 animate-fade-up" style={{ animationDelay: "0.3s" }}>
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🔬</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-400 mb-0.5">Diagnostic Centre</div>
+                    <div className="text-sm font-semibold text-slate-800">LabCare uploaded CBC Report</div>
+                    <div className="text-xs text-slate-400">Shared with Dr. Sharma automatically</div>
+                  </div>
+                  <span className="text-xs text-green-500 font-semibold flex-shrink-0">Just now</span>
+                </div>
+
+                {/* Step 2 */}
+                <div className="flex items-start gap-3 py-3 border-b border-slate-50 animate-fade-up" style={{ animationDelay: "0.6s" }}>
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🩺</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-400 mb-0.5">Doctor</div>
+                    <div className="text-sm font-semibold text-slate-800">Dr. Sharma reviewed remotely</div>
+                    <div className="text-xs text-slate-400">No physical visit needed</div>
+                  </div>
+                  <span className="text-xs text-blue-500 font-semibold flex-shrink-0">2 min ago</span>
+                </div>
+
+                {/* Step 3 */}
+                <div className="flex items-start gap-3 pt-3 animate-fade-up" style={{ animationDelay: "0.9s" }}>
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">💊</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-400 mb-0.5">Patient</div>
+                    <div className="text-sm font-semibold text-slate-800">Prescription issued digitally</div>
+                    <div className="text-xs text-slate-400">Saved to medical history</div>
+                  </div>
+                  <span className="text-xs text-blue-500 font-semibold flex-shrink-0">3 min ago</span>
+                </div>
               </div>
 
-              {/* Floating chips */}
-              {heroChips.map((chip, i) => {
-                const positions = [
-                  "top-4 left-4",
-                  "top-4 right-4",
-                  "bottom-16 left-0",
-                  "bottom-4 right-8",
-                  "top-1/2 right-0",
-                ];
-                const anims = ["animate-float", "animate-float-d1", "animate-float-d2", "animate-float-d3", "animate-float2"];
-                return (
-                  <div
-                    key={chip.label}
-                    className={`absolute ${positions[i]} ${anims[i]} bg-white rounded-2xl px-4 py-3 flex items-center gap-2.5 shadow-lg shadow-blue-100/50 border border-blue-100`}
-                  >
-                    <span className="text-xl">{chip.icon}</span>
-                    <span className="text-sm font-semibold text-slate-700">{chip.label}</span>
-                  </div>
-                );
-              })}
+              {/* Summary chip */}
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-blue-200 animate-fade-up" style={{ animationDelay: "1.1s" }}>
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">✅</div>
+                <div>
+                  <div className="text-sm font-bold text-white">No extra trip needed</div>
+                  <div className="text-xs text-blue-100">Patient consulted, diagnosed and prescribed — remotely</div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
