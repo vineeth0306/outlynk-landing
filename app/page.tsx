@@ -9,57 +9,61 @@ const roles: { id: Role; label: string; icon: string; description: string }[] = 
     id: "patient",
     label: "Patient",
     icon: "🙋",
-    description: "Get your reports shared directly with your doctor. No more carrying physical files or making extra trips.",
+    description: "Access your reports, consult your doctor remotely, and maintain a complete health history — all in one place.",
   },
   {
     id: "doctor",
     label: "Doctor",
     icon: "🩺",
-    description: "Review reports remotely before the patient even steps out. Decide if a physical visit is needed at all.",
+    description: "Receive reports directly from labs, review them remotely, and decide the right next step for your patient.",
   },
   {
     id: "lab",
     label: "Diagnostic Centre",
     icon: "🔬",
-    description: "Upload reports once. They reach the doctor and patient instantly, with zero follow-up calls needed.",
+    description: "Upload reports once. They reach the ordering doctor and patient instantly — no calls, no delays.",
   },
 ];
 
 const steps = [
   {
     number: "01",
+    label: "First",
     title: "Doctor orders a test",
-    description: "After your consultation, your doctor sends a digital test order through Outlynk to a diagnostic centre.",
+    description: "After your consultation, your doctor sends a digital test order through Outlynk to a diagnostic centre near you.",
     icon: "🩺",
     color: "from-blue-500 to-blue-600",
   },
   {
     number: "02",
+    label: "Then",
     title: "Lab uploads the report",
-    description: "Once your tests are done, the diagnostic centre uploads your report directly to Outlynk.",
+    description: "Once your tests are done, the diagnostic centre uploads your report directly to Outlynk — no paper, no courier.",
     icon: "🔬",
     color: "from-cyan-500 to-blue-500",
   },
   {
     number: "03",
+    label: "Finally",
     title: "Doctor reviews remotely",
-    description: "Your doctor gets notified instantly, reviews your reports remotely, then decides the next step.",
+    description: "Your doctor gets notified instantly, reviews your reports, and decides if a physical visit is even needed.",
     icon: "📱",
     color: "from-blue-600 to-indigo-600",
   },
 ];
 
 const problems = [
-  { step: "1", label: "Visit doctor", detail: "Consultation + test prescription" },
-  { step: "2", label: "Visit diagnostic centre", detail: "Get tests done" },
-  { step: "3", label: "Collect physical reports", detail: "Wait 1-2 days, then go back" },
-  { step: "4", label: "Visit doctor again", detail: "Carry reports manually for review" },
+  { label: "First", title: "You visit a doctor.", detail: "They order tests. You have no digital record." },
+  { label: "Then", title: "Tests are repeated.", detail: "Reports are physical. No one else can access them." },
+  { label: "Finally", title: "And it is often unclear...", detail: "Do you need a follow-up? Where are your reports?" },
 ];
 
-const floatingCards = [
-  { icon: "📊", title: "Report Ready", sub: "CBC Report uploaded by LabCare", time: "Just now", color: "border-blue-200" },
-  { icon: "🩺", title: "Doctor Notified", sub: "Dr. Sharma reviewed your report", time: "2 min ago", color: "border-cyan-200" },
-  { icon: "💊", title: "Prescription Ready", sub: "Digital prescription issued", time: "5 min ago", color: "border-indigo-200" },
+const heroChips = [
+  { icon: "📋", label: "Test Order Sent" },
+  { icon: "📊", label: "Report Ready" },
+  { icon: "🩺", label: "Doctor Notified" },
+  { icon: "💊", label: "Prescription Issued" },
+  { icon: "📁", label: "Medical History" },
 ];
 
 export default function Home() {
@@ -73,17 +77,14 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setError("");
-
     try {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...formData, role: activeRole }),
       });
-
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
-
       setSubmitted(true);
       setFormData({ name: "", mobile: "", email: "", city: "" });
     } catch (err: unknown) {
@@ -94,15 +95,20 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 overflow-x-hidden">
+    <div className="min-h-screen text-slate-900" style={{ backgroundColor: "#f4f7ff" }}>
 
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 glass-light border-b border-slate-100/80">
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-blue-100/60">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <span className="text-xl font-extrabold text-gradient tracking-tight">Outlynk</span>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+            <a href="#how-it-works" className="hover:text-blue-600 transition-colors">How it Works</a>
+            <a href="#for-who" className="hover:text-blue-600 transition-colors">Who it&apos;s For</a>
+            <a href="#waitlist" className="hover:text-blue-600 transition-colors">Register</a>
+          </div>
           <a
             href="#waitlist"
-            className="shimmer-btn text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all hover:scale-105 hover:shadow-lg hover:shadow-blue-200"
+            className="shimmer-btn text-white text-sm font-bold px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity shadow-md shadow-blue-200"
           >
             Register Interest
           </a>
@@ -110,233 +116,225 @@ export default function Home() {
       </nav>
 
       {/* Hero */}
-      <section className="relative min-h-screen flex items-center justify-center pt-16 pb-24 px-6 overflow-hidden bg-slate-950">
+      <section className="section-tint pt-20 pb-16 px-6 overflow-hidden">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
 
-        {/* Blobs */}
-        <div className="absolute top-20 left-10 w-96 h-96 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
-        <div className="absolute top-40 right-10 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-2000" />
-        <div className="absolute bottom-20 left-1/3 w-72 h-72 bg-indigo-600 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-blob animation-delay-4000" />
-
-        {/* Dot grid */}
-        <div className="absolute inset-0 dot-grid opacity-30" />
-
-        {/* Gradient overlay bottom */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent z-10" />
-
-        <div className="relative z-10 max-w-5xl mx-auto text-center">
-
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 glass border border-blue-500/30 text-blue-300 text-sm font-semibold px-5 py-2 rounded-full mb-8 animate-fade-up">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-            Built for India · Registering Interest
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6 animate-fade-up-delay">
-            India&apos;s healthcare is
-            <br />
-            <span className="text-gradient">fragmented.</span>
-            <br />
-            <span className="text-white opacity-90">Outlynk connects the chain.</span>
-          </h1>
-
-          {/* Subtext */}
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-up-delay2">
-            One platform where diagnostic reports flow directly from labs to doctors, consultations happen remotely, and your medical history lives in one place.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20 animate-fade-up-delay2">
-            <a
-              href="#waitlist"
-              className="shimmer-btn text-white text-base font-bold px-10 py-4 rounded-full hover:scale-105 transition-transform glow-blue"
-            >
-              Register Interest
-            </a>
-            <a
-              href="#how-it-works"
-              className="glass text-white text-base font-semibold px-10 py-4 rounded-full hover:bg-white/15 transition-all"
-            >
-              See How It Works
-            </a>
-          </div>
-
-          {/* Floating notification cards */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {floatingCards.map((card, i) => (
-              <div
-                key={card.title}
-                className={`glass-light rounded-2xl px-5 py-4 flex items-center gap-3 text-left border ${card.color} shadow-xl ${
-                  i === 0 ? "animate-float" : i === 1 ? "animate-float-delayed" : "animate-float-slow"
-                }`}
-              >
-                <div className="text-2xl">{card.icon}</div>
-                <div>
-                  <div className="text-sm font-bold text-slate-800">{card.title}</div>
-                  <div className="text-xs text-slate-500">{card.sub}</div>
-                  <div className="text-xs text-blue-500 font-medium mt-0.5">{card.time}</div>
-                </div>
+            {/* Left */}
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-bold px-4 py-2 rounded-full mb-6 animate-fade-up">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse-dot" />
+                Built for India · Registering Interest Now
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Problem */}
-      <section className="py-28 px-6 bg-white relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-red-50 rounded-full blur-3xl opacity-60" />
-
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-red-500 text-sm font-bold uppercase tracking-widest">The Problem</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3 mb-4">
-              The way it works today is broken.
-            </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
-              Getting a diagnosis in India means multiple trips, carrying physical files, and losing time for both patients and doctors.
-            </p>
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center gap-3">
-            {problems.map((p, i) => (
-              <>
-                <div
-                  key={p.step}
-                  className="flex-1 w-full bg-red-50 border border-red-100 hover:border-red-300 hover:shadow-lg transition-all rounded-2xl p-6 text-center group"
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md shadow-red-200">
-                    {p.step}
-                  </div>
-                  <div className="font-bold text-slate-800 mb-1.5">{p.label}</div>
-                  <div className="text-xs text-slate-500 leading-relaxed">{p.detail}</div>
-                </div>
-                {i < problems.length - 1 && (
-                  <div key={`arrow-${i}`} className="hidden md:flex flex-shrink-0 w-6 items-center justify-center text-red-300 text-xl font-bold">
-                    ›
-                  </div>
-                )}
-              </>
-            ))}
-          </div>
-
-          <div className="mt-10 text-center">
-            <span className="inline-block bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-6 py-3 rounded-full">
-              Most patients make 3 to 4 separate trips just to get a diagnosis and prescription.
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="py-28 px-6 bg-slate-50/80">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">The Solution</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3 mb-4">
-              With Outlynk, the flow is simple.
-            </h2>
-            <p className="text-lg text-slate-500">
-              Reports flow automatically. Doctors decide remotely. Patients stay informed.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-14 left-1/6 right-1/6 h-px bg-gradient-to-r from-blue-200 via-cyan-300 to-blue-200 z-0" style={{ left: "20%", right: "20%" }} />
-
-            {steps.map((step) => (
-              <div
-                key={step.number}
-                className="relative z-10 bg-white rounded-3xl p-8 text-center shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-slate-100 group"
-              >
-                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${step.color} text-white text-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform shadow-md`}>
-                  {step.icon}
-                </div>
-                <div className="text-xs font-bold text-blue-400 tracking-widest mb-2">{step.number}</div>
-                <h3 className="text-lg font-bold text-slate-900 mb-3">{step.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{step.description}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Result callout */}
-          <div className="mt-12 relative overflow-hidden rounded-3xl p-8 text-white text-center animate-gradient-x bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600">
-            <div className="absolute inset-0 dot-grid opacity-10" />
-            <div className="relative z-10">
-              <div className="text-2xl font-extrabold mb-2">The result?</div>
-              <p className="text-blue-100 text-lg max-w-xl mx-auto">
-                Doctor reviews reports from their phone. Decides if a visit is needed. Prescription is digital. Everything lives in your medical history.
+              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight mb-5 animate-fade-up-d1">
+                India&apos;s healthcare
+                <br />
+                is fragmented.
+                <br />
+                <span className="text-gradient">Outlynk connects</span>
+                <br />
+                <span className="text-gradient">the chain.</span>
+              </h1>
+              <p className="text-slate-500 text-lg leading-relaxed mb-8 max-w-md animate-fade-up-d2">
+                One platform where diagnostic reports flow directly from labs to doctors, consultations happen remotely, and your medical history lives in one place.
               </p>
+              <div className="flex flex-col sm:flex-row gap-3 animate-fade-up-d3">
+                <a
+                  href="#waitlist"
+                  className="shimmer-btn text-white font-bold px-8 py-3.5 rounded-full shadow-lg shadow-blue-200 hover:opacity-90 transition-opacity text-sm"
+                >
+                  Register Interest
+                </a>
+                <a
+                  href="#how-it-works"
+                  className="border-2 border-blue-200 text-blue-600 font-bold px-8 py-3.5 rounded-full hover:bg-blue-50 transition-colors text-sm"
+                >
+                  See How It Works
+                </a>
+              </div>
+            </div>
+
+            {/* Right — floating chips */}
+            <div className="relative h-80 md:h-96 hidden md:block">
+              {/* Central circle */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full icon-box-blue flex flex-col items-center justify-center shadow-xl shadow-blue-300/40">
+                <span className="text-3xl">🏥</span>
+                <span className="text-white text-xs font-bold mt-1">Outlynk</span>
+              </div>
+
+              {/* Floating chips */}
+              {heroChips.map((chip, i) => {
+                const positions = [
+                  "top-4 left-4",
+                  "top-4 right-4",
+                  "bottom-16 left-0",
+                  "bottom-4 right-8",
+                  "top-1/2 right-0",
+                ];
+                const anims = ["animate-float", "animate-float-d1", "animate-float-d2", "animate-float-d3", "animate-float2"];
+                return (
+                  <div
+                    key={chip.label}
+                    className={`absolute ${positions[i]} ${anims[i]} bg-white rounded-2xl px-4 py-3 flex items-center gap-2.5 shadow-lg shadow-blue-100/50 border border-blue-100`}
+                  >
+                    <span className="text-xl">{chip.icon}</span>
+                    <span className="text-sm font-semibold text-slate-700">{chip.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Who it's for */}
-      <section className="py-28 px-6 bg-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-60" />
-        <div className="absolute bottom-0 left-0 w-72 h-72 bg-cyan-50 rounded-full blur-3xl opacity-60" />
+      {/* Problem */}
+      <section className="section-white py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
+              A Situation Many Patients Recognise
+            </h2>
+          </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">Who It is For</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3">
-              Built for everyone in the chain.
+          {/* Connected step cards */}
+          <div className="relative">
+            {/* Connecting dashed line */}
+            <div className="hidden md:block absolute top-10 left-[20%] right-[20%] border-t-2 border-dashed border-blue-200 z-0" />
+
+            <div className="grid md:grid-cols-3 gap-6 relative z-10">
+              {problems.map((p) => (
+                <div key={p.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 card-hover">
+                  <div className="inline-block bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full mb-4">
+                    {p.label}
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-2">{p.title}</h3>
+                  <p className="text-sm text-slate-500">{p.detail}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 text-center">
+              <span className="inline-block bg-blue-50 border border-blue-100 text-blue-700 text-sm font-semibold px-6 py-3 rounded-full">
+                Outlynk was built to address this
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how-it-works" className="section-tint py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-4 py-1.5 rounded-full mb-3">
+              Built to support every role in healthcare
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+              Designed for How Healthcare Works
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm card-hover"
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} text-white text-xl flex items-center justify-center shadow-md`}>
+                    {step.icon}
+                  </div>
+                  <span className="text-xs font-bold text-blue-400 bg-blue-50 px-3 py-1 rounded-full">{step.label}</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-900 mb-2">{step.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Result banner */}
+          <div className="mt-10 animate-gradient-x bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl p-7 text-white text-center shadow-lg shadow-blue-200">
+            <div className="font-extrabold text-xl mb-1">The result?</div>
+            <p className="text-blue-100 max-w-xl mx-auto text-sm leading-relaxed">
+              Doctor reviews reports from their phone. Decides if a visit is needed. Prescription is digital. Everything lives in your medical history.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Who it's for */}
+      <section id="for-who" className="section-white py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
+              Built for Everyone in the Chain
+            </h2>
+            <p className="text-slate-500 max-w-xl mx-auto">
+              One platform that connects patients, doctors, and diagnostic centres — securely and with consent.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="bg-white border border-slate-100 rounded-3xl p-8 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-default"
+                className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover"
               >
-                <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl mb-5 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
+                <div className="w-12 h-12 rounded-xl icon-box flex items-center justify-center text-2xl mb-4 shadow-sm">
                   {role.icon}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{role.label}</h3>
+                <h3 className="font-bold text-slate-900 mb-2">{role.label}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{role.description}</p>
               </div>
             ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <a href="#waitlist" className="shimmer-btn text-white font-bold px-8 py-3.5 rounded-full shadow-lg shadow-blue-200 hover:opacity-90 transition-opacity text-sm inline-block">
+              Register Interest →
+            </a>
           </div>
         </div>
       </section>
 
       {/* Waitlist */}
-      <section id="waitlist" className="py-28 px-6 bg-slate-50/80 relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-100 rounded-full blur-3xl opacity-50" />
-
-        <div className="relative z-10 max-w-lg mx-auto">
+      <section id="waitlist" className="section-tint py-24 px-6">
+        <div className="max-w-xl mx-auto">
           <div className="text-center mb-10">
-            <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">Register Interest</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mt-3 mb-4">
+            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
+              Register Interest
+            </div>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
               Tell us you&apos;re interested.
             </h2>
-            <p className="text-slate-500">
-              We are gauging interest before we build. Register below and we will reach out to you directly as we get closer to launch.
+            <p className="text-slate-500 text-sm max-w-sm mx-auto">
+              We are gauging interest before we build. Register below and we will reach out as we get closer to launch.
             </p>
           </div>
 
-          {/* Role tabs */}
-          <div className="flex rounded-2xl bg-slate-100 p-1.5 mb-8 gap-1">
+          {/* Role selector */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
             {roles.map((role) => (
               <button
                 key={role.id}
                 onClick={() => { setActiveRole(role.id); setSubmitted(false); }}
-                className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
+                className={`rounded-2xl p-4 text-center border-2 transition-all ${
                   activeRole === role.id
-                    ? "bg-white text-blue-600 shadow-md glow-blue-sm"
-                    : "text-slate-500 hover:text-slate-700"
+                    ? "border-blue-500 bg-white shadow-md shadow-blue-100"
+                    : "border-transparent bg-white/60 hover:bg-white hover:border-blue-200"
                 }`}
               >
-                {role.icon} {role.label}
+                <div className="text-2xl mb-1.5">{role.icon}</div>
+                <div className={`text-xs font-bold ${activeRole === role.id ? "text-blue-600" : "text-slate-600"}`}>
+                  {role.label}
+                </div>
               </button>
             ))}
           </div>
 
           {submitted ? (
-            <div className="text-center bg-gradient-to-b from-blue-50 to-white border border-blue-100 rounded-3xl p-12 shadow-xl">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mx-auto mb-5 text-3xl glow-blue">
+            <div className="text-center bg-white border border-blue-100 rounded-2xl p-12 shadow-lg">
+              <div className="w-16 h-16 rounded-full icon-box-blue flex items-center justify-center mx-auto mb-5 text-3xl shadow-lg shadow-blue-200">
                 🎉
               </div>
               <h3 className="text-2xl font-bold text-slate-900 mb-2">You are registered!</h3>
@@ -344,15 +342,12 @@ export default function Home() {
                 We will reach out as we get ready to launch for{" "}
                 {activeRole === "lab" ? "diagnostic centres" : activeRole + "s"} in your city.
               </p>
-              <button
-                onClick={() => setSubmitted(false)}
-                className="mt-6 text-blue-600 text-sm font-semibold hover:underline"
-              >
+              <button onClick={() => setSubmitted(false)} className="mt-6 text-blue-600 text-sm font-semibold hover:underline">
                 Register another
               </button>
             </div>
           ) : (
-            <div className="bg-white rounded-3xl shadow-xl border border-slate-100 p-8">
+            <div className="bg-white rounded-2xl shadow-lg border border-blue-50 p-8">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -363,15 +358,10 @@ export default function Home() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-                    placeholder={
-                      activeRole === "lab" ? "Diagnostic Centre Name"
-                      : activeRole === "doctor" ? "Dr. Full Name"
-                      : "Your full name"
-                    }
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                    placeholder={activeRole === "lab" ? "Diagnostic Centre Name" : activeRole === "doctor" ? "Dr. Full Name" : "Your full name"}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                     Mobile Number <span className="text-slate-400 font-normal text-xs">(optional)</span>
@@ -380,11 +370,10 @@ export default function Home() {
                     type="tel"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
                     placeholder="+91 98765 43210"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                     Email Address <span className="text-blue-500">*</span>
@@ -394,11 +383,10 @@ export default function Home() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
                     placeholder="you@example.com"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                     City <span className="text-slate-400 font-normal text-xs">(optional)</span>
@@ -407,7 +395,7 @@ export default function Home() {
                     type="text"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
                     placeholder="Bengaluru, Mumbai, Hyderabad..."
                   />
                 </div>
@@ -421,11 +409,10 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full shimmer-btn text-white font-bold py-4 rounded-xl hover:scale-[1.02] transition-transform disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm mt-2 glow-blue"
+                  className="w-full shimmer-btn text-white font-bold py-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed text-sm shadow-lg shadow-blue-200"
                 >
                   {loading ? "Submitting..." : `Register as ${activeRole === "lab" ? "Diagnostic Centre" : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}`}
                 </button>
-
                 <p className="text-xs text-slate-400 text-center">
                   No spam. We will only reach out when we are ready to launch in your city.
                 </p>
@@ -436,13 +423,11 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-950 border-t border-slate-800 py-12 px-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-2xl font-extrabold text-gradient mb-2">Outlynk</div>
-          <p className="text-slate-500 text-sm mb-6">
-            Connecting patients, doctors, and diagnostic centres across India.
-          </p>
-          <p className="text-slate-600 text-xs">2026 Outlynk. All rights reserved.</p>
+      <footer className="section-white border-t border-slate-100 py-10 px-6 text-center">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-xl font-extrabold text-gradient mb-2">Outlynk</div>
+          <p className="text-slate-400 text-sm">Connecting patients, doctors, and diagnostic centres across India.</p>
+          <p className="text-slate-300 text-xs mt-3">2026 Outlynk. All rights reserved.</p>
         </div>
       </footer>
     </div>
