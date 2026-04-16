@@ -8,19 +8,19 @@ const roles: { id: Role; label: string; icon: string; description: string }[] = 
   {
     id: "patient",
     label: "Patient",
-    icon: "🧑‍⚕️",
+    icon: "🙋",
     description: "Get your reports shared directly with your doctor. No more carrying physical files or making extra trips.",
   },
   {
     id: "doctor",
     label: "Doctor",
-    icon: "👨‍⚕️",
+    icon: "🩺",
     description: "Review reports remotely before the patient even steps out. Decide if a physical visit is needed at all.",
   },
   {
     id: "lab",
     label: "Diagnostic Centre",
-    icon: "🏥",
+    icon: "🔬",
     description: "Upload reports once. They reach the doctor and patient instantly, with zero follow-up calls needed.",
   },
 ];
@@ -30,21 +30,21 @@ const steps = [
     number: "01",
     title: "Doctor orders a test",
     description: "After your consultation, your doctor sends a digital test order through Outlynk to a diagnostic centre.",
-    icon: "📋",
+    icon: "🩺",
     color: "from-blue-500 to-blue-600",
   },
   {
     number: "02",
     title: "Lab uploads the report",
     description: "Once your tests are done, the diagnostic centre uploads your report directly to Outlynk.",
-    icon: "📤",
+    icon: "🔬",
     color: "from-cyan-500 to-blue-500",
   },
   {
     number: "03",
     title: "Doctor reviews remotely",
     description: "Your doctor gets notified instantly, reviews your reports remotely, then decides the next step.",
-    icon: "💻",
+    icon: "📱",
     color: "from-blue-600 to-indigo-600",
   },
 ];
@@ -57,8 +57,8 @@ const problems = [
 ];
 
 const floatingCards = [
-  { icon: "📄", title: "Report Ready", sub: "CBC Report uploaded by LabCare", time: "Just now", color: "border-blue-200" },
-  { icon: "👨‍⚕️", title: "Doctor Notified", sub: "Dr. Sharma reviewed your report", time: "2 min ago", color: "border-cyan-200" },
+  { icon: "📊", title: "Report Ready", sub: "CBC Report uploaded by LabCare", time: "Just now", color: "border-blue-200" },
+  { icon: "🩺", title: "Doctor Notified", sub: "Dr. Sharma reviewed your report", time: "2 min ago", color: "border-cyan-200" },
   { icon: "💊", title: "Prescription Ready", sub: "Digital prescription issued", time: "5 min ago", color: "border-indigo-200" },
 ];
 
