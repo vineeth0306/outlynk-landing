@@ -75,12 +75,13 @@ export default function Home() {
         body: JSON.stringify({ ...formData, role: activeRole }),
       });
 
-      if (!res.ok) throw new Error("Something went wrong");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
 
       setSubmitted(true);
       setFormData({ name: "", mobile: "", email: "", city: "" });
-    } catch {
-      setError("Failed to submit. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
     } finally {
       setLoading(false);
     }

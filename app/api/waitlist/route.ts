@@ -46,8 +46,8 @@ export async function POST(req: NextRequest) {
 
     if (!airtableRes.ok) {
       const err = await airtableRes.json();
-      console.error("Airtable error:", err);
-      return NextResponse.json({ error: "Failed to save. Please try again." }, { status: 500 });
+      console.error("Airtable error:", JSON.stringify(err));
+      return NextResponse.json({ error: err?.error?.message || JSON.stringify(err) }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, message: "You're on the waitlist!" }, { status: 201 });
