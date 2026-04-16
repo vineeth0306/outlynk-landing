@@ -38,7 +38,6 @@ export async function POST(req: NextRequest) {
             number: mobile?.trim() || "",
             city: city?.trim() || "",
             role: role.charAt(0).toUpperCase() + role.slice(1),
-            "submitted at": new Date().toISOString(),
           },
         }),
       }
