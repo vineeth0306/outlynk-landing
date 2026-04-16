@@ -21,7 +21,7 @@ const roles: { id: Role; label: string; icon: string; description: string }[] = 
     id: "lab",
     label: "Diagnostic Centre",
     icon: "🏥",
-    description: "Upload reports once. They reach the doctor and patient instantly — no follow-up calls.",
+    description: "Upload reports once. They reach the doctor and patient instantly, no follow-up calls.",
   },
 ];
 
@@ -44,7 +44,7 @@ const steps = [
     number: "03",
     title: "Doctor reviews remotely",
     description:
-      "Your doctor gets notified instantly and reviews your reports remotely — then decides the next step.",
+      "Your doctor gets notified instantly and reviews your reports remotely, then decides the next step.",
     icon: "💻",
   },
 ];
@@ -63,7 +63,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -97,7 +97,7 @@ export default function Home() {
             href="#waitlist"
             className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-blue-700 transition-colors"
           >
-            Get Early Access
+            Register Interest
           </a>
         </div>
       </nav>
@@ -106,7 +106,7 @@ export default function Home() {
       <section className="pt-36 pb-24 px-6 text-center bg-gradient-to-b from-blue-50 to-white">
         <div className="max-w-3xl mx-auto">
           <div className="inline-block bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
-            Built for India · Early Access Open
+            Built for India · Registering Interest
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
             Your diagnostic reports
@@ -115,7 +115,7 @@ export default function Home() {
             the moment they&apos;re ready.
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Outlynk connects patients, doctors, and diagnostic centres on one platform — eliminating
+            Outlynk connects patients, doctors, and diagnostic centres on one platform, eliminating
             unnecessary trips and putting your medical history in one place.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -123,7 +123,7 @@ export default function Home() {
               href="#waitlist"
               className="bg-blue-600 text-white text-lg font-semibold px-8 py-4 rounded-full hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
             >
-              Join the Waitlist
+              Register Interest
             </a>
             <a
               href="#how-it-works"
@@ -159,7 +159,7 @@ export default function Home() {
               The way it works today is broken.
             </h2>
             <p className="text-lg text-slate-600 max-w-xl mx-auto">
-              Getting a diagnosis in India means multiple trips, carrying physical files, and losing time — for both patients and doctors.
+              Getting a diagnosis in India means multiple trips, carrying physical files, and losing time for both patients and doctors.
             </p>
           </div>
 
@@ -216,7 +216,7 @@ export default function Home() {
             <div className="text-2xl font-bold mb-2">The result?</div>
             <p className="text-blue-100 text-lg">
               Doctor reviews reports from their phone. Decides: virtual call or in-person visit.
-              Prescription is digital. Everything is in your medical history — forever.
+              Prescription is digital. Everything is in your medical history, forever.
             </p>
           </div>
         </div>
@@ -251,11 +251,10 @@ export default function Home() {
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-              Be the first to use Outlynk.
+              Tell us you&apos;re interested.
             </h2>
             <p className="text-slate-600">
-              We&apos;re onboarding our first batch of doctors, diagnostic centres, and patients. Join the
-              waitlist and we&apos;ll reach out when we&apos;re ready for you.
+              We are gauging interest before we build. Register below and we will reach out to you directly as we get closer to launch.
             </p>
           </div>
 
@@ -352,11 +351,11 @@ export default function Home() {
                 disabled={loading}
                 className="w-full bg-blue-600 text-white font-semibold py-4 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm mt-2"
               >
-                {loading ? "Submitting..." : `Join as ${activeRole === "lab" ? "Diagnostic Centre" : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}`}
+                {loading ? "Submitting..." : `Register as ${activeRole === "lab" ? "Diagnostic Centre" : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}`}
               </button>
 
               <p className="text-xs text-slate-400 text-center">
-                No spam. We&apos;ll only contact you when Outlynk is ready for your city.
+                No spam. We will only reach out when we are ready to launch in your city.
               </p>
             </form>
           )}
