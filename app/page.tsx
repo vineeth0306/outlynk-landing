@@ -195,7 +195,7 @@ const roles: { id: Role; label: string; icon: string; description: string }[] = 
     id: "patient",
     label: "Patient",
     icon: "🙋",
-    description: "Access your reports, consult your doctor remotely, and maintain a complete health history — all in one place.",
+    description: "Access your reports, consult your doctor remotely, and maintain a complete health history, all in one place.",
   },
   {
     id: "doctor",
@@ -207,7 +207,7 @@ const roles: { id: Role; label: string; icon: string; description: string }[] = 
     id: "lab",
     label: "Diagnostic Centre",
     icon: "🔬",
-    description: "Upload reports once. They reach the ordering doctor and patient instantly — no calls, no delays.",
+    description: "Upload reports once. They reach the ordering doctor and patient instantly, no calls, no delays.",
   },
 ];
 
@@ -224,7 +224,7 @@ const steps = [
     number: "02",
     label: "Then",
     title: "Lab uploads the report",
-    description: "Once your tests are done, the diagnostic centre uploads your report directly to Outlynk — no paper, no courier.",
+    description: "Once your tests are done, the diagnostic centre uploads your report directly to Outlynk, no paper, no courier.",
     icon: "🔬",
     color: "from-cyan-500 to-blue-500",
   },
@@ -422,7 +422,7 @@ export default function Home() {
               Built for Everyone in the Chain
             </h2>
             <p className="text-slate-500 max-w-xl mx-auto">
-              One platform that connects patients, doctors, and diagnostic centres — securely and with consent.
+              One platform that connects patients, doctors, and diagnostic centres, securely and with consent.
             </p>
           </div>
 
