@@ -183,39 +183,46 @@ export default function Home() {
       </section>
 
       {/* Problem */}
-      <section className="py-28 px-6 bg-white">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-28 px-6 bg-slate-950 relative overflow-hidden">
+        <div className="absolute inset-0 dot-grid opacity-20" />
+        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-red-900 rounded-full blur-3xl opacity-10" />
+
+        <div className="relative z-10 max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">The Problem</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3 mb-4">
+            <span className="text-red-400 text-sm font-bold uppercase tracking-widest">The Problem</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-3 mb-4">
               The way it works today is broken.
             </h2>
-            <p className="text-lg text-slate-500 max-w-xl mx-auto">
+            <p className="text-lg text-slate-400 max-w-xl mx-auto">
               Getting a diagnosis in India means multiple trips, carrying physical files, and losing time for both patients and doctors.
             </p>
           </div>
 
-          <div className="relative flex flex-col md:flex-row items-stretch gap-4">
+          {/* Cards row — arrows are siblings not children */}
+          <div className="flex flex-col md:flex-row items-center gap-3">
             {problems.map((p, i) => (
-              <div key={p.step} className="flex md:flex-col items-center gap-3 flex-1">
-                <div className="group relative bg-red-50 border border-red-100 hover:border-red-300 hover:shadow-lg transition-all rounded-2xl p-6 flex-1 w-full text-center cursor-default">
-                  <div className="w-8 h-8 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center mx-auto mb-3">
+              <>
+                <div
+                  key={p.step}
+                  className="flex-1 w-full bg-white/5 border border-white/10 hover:border-red-500/40 hover:bg-white/10 transition-all rounded-2xl p-6 text-center group"
+                >
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-red-900/30">
                     {p.step}
                   </div>
-                  <div className="font-bold text-slate-800 mb-1">{p.label}</div>
-                  <div className="text-xs text-slate-500">{p.detail}</div>
+                  <div className="font-bold text-white mb-1.5">{p.label}</div>
+                  <div className="text-xs text-slate-400 leading-relaxed">{p.detail}</div>
                 </div>
                 {i < problems.length - 1 && (
-                  <div className="hidden md:flex items-center justify-center text-red-300 text-2xl font-light select-none">
+                  <div key={`arrow-${i}`} className="hidden md:flex flex-shrink-0 w-6 items-center justify-center text-red-700 text-xl font-bold">
                     ›
                   </div>
                 )}
-              </div>
+              </>
             ))}
           </div>
 
           <div className="mt-10 text-center">
-            <span className="inline-block bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-5 py-2.5 rounded-full">
+            <span className="inline-block bg-red-950/60 border border-red-800/50 text-red-400 text-sm font-semibold px-6 py-3 rounded-full">
               Most patients make 3 to 4 separate trips just to get a diagnosis and prescription.
             </span>
           </div>
