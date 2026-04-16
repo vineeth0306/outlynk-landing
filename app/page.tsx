@@ -183,37 +183,35 @@ export default function Home() {
       </section>
 
       {/* Problem */}
-      <section className="py-28 px-6 bg-slate-950 relative overflow-hidden">
-        <div className="absolute inset-0 dot-grid opacity-20" />
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-red-900 rounded-full blur-3xl opacity-10" />
+      <section className="py-28 px-6 bg-white relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[200px] bg-red-50 rounded-full blur-3xl opacity-60" />
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-red-400 text-sm font-bold uppercase tracking-widest">The Problem</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-3 mb-4">
+            <span className="text-red-500 text-sm font-bold uppercase tracking-widest">The Problem</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3 mb-4">
               The way it works today is broken.
             </h2>
-            <p className="text-lg text-slate-400 max-w-xl mx-auto">
+            <p className="text-lg text-slate-500 max-w-xl mx-auto">
               Getting a diagnosis in India means multiple trips, carrying physical files, and losing time for both patients and doctors.
             </p>
           </div>
 
-          {/* Cards row — arrows are siblings not children */}
           <div className="flex flex-col md:flex-row items-center gap-3">
             {problems.map((p, i) => (
               <>
                 <div
                   key={p.step}
-                  className="flex-1 w-full bg-white/5 border border-white/10 hover:border-red-500/40 hover:bg-white/10 transition-all rounded-2xl p-6 text-center group"
+                  className="flex-1 w-full bg-red-50 border border-red-100 hover:border-red-300 hover:shadow-lg transition-all rounded-2xl p-6 text-center group"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-red-900/30">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 text-white text-sm font-bold flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform shadow-md shadow-red-200">
                     {p.step}
                   </div>
-                  <div className="font-bold text-white mb-1.5">{p.label}</div>
-                  <div className="text-xs text-slate-400 leading-relaxed">{p.detail}</div>
+                  <div className="font-bold text-slate-800 mb-1.5">{p.label}</div>
+                  <div className="text-xs text-slate-500 leading-relaxed">{p.detail}</div>
                 </div>
                 {i < problems.length - 1 && (
-                  <div key={`arrow-${i}`} className="hidden md:flex flex-shrink-0 w-6 items-center justify-center text-red-700 text-xl font-bold">
+                  <div key={`arrow-${i}`} className="hidden md:flex flex-shrink-0 w-6 items-center justify-center text-red-300 text-xl font-bold">
                     ›
                   </div>
                 )}
@@ -222,7 +220,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 text-center">
-            <span className="inline-block bg-red-950/60 border border-red-800/50 text-red-400 text-sm font-semibold px-6 py-3 rounded-full">
+            <span className="inline-block bg-red-50 border border-red-200 text-red-600 text-sm font-semibold px-6 py-3 rounded-full">
               Most patients make 3 to 4 separate trips just to get a diagnosis and prescription.
             </span>
           </div>
@@ -230,7 +228,7 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-28 px-6 bg-slate-50">
+      <section id="how-it-works" className="py-28 px-6 bg-slate-50/80">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">The Solution</span>
@@ -275,15 +273,14 @@ export default function Home() {
       </section>
 
       {/* Who it's for */}
-      <section className="py-28 px-6 bg-slate-950 relative overflow-hidden">
-        {/* Background blobs */}
-        <div className="absolute top-10 right-10 w-72 h-72 bg-blue-700 rounded-full blur-3xl opacity-10" />
-        <div className="absolute bottom-10 left-10 w-72 h-72 bg-cyan-600 rounded-full blur-3xl opacity-10" />
+      <section className="py-28 px-6 bg-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-50 rounded-full blur-3xl opacity-60" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-cyan-50 rounded-full blur-3xl opacity-60" />
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <span className="text-cyan-400 text-sm font-bold uppercase tracking-widest">Who It is For</span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mt-3">
+            <span className="text-blue-600 text-sm font-bold uppercase tracking-widest">Who It is For</span>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mt-3">
               Built for everyone in the chain.
             </h2>
           </div>
@@ -292,11 +289,13 @@ export default function Home() {
             {roles.map((role) => (
               <div
                 key={role.id}
-                className="glass rounded-3xl p-8 hover:bg-white/15 transition-all hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-900/30 group cursor-default"
+                className="bg-white border border-slate-100 rounded-3xl p-8 hover:border-blue-200 hover:shadow-xl hover:-translate-y-1 transition-all group cursor-default"
               >
-                <div className="text-5xl mb-5 group-hover:scale-110 transition-transform inline-block">{role.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-3">{role.label}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{role.description}</p>
+                <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center text-3xl mb-5 group-hover:scale-110 group-hover:bg-blue-100 transition-all">
+                  {role.icon}
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">{role.label}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{role.description}</p>
               </div>
             ))}
           </div>
@@ -304,7 +303,7 @@ export default function Home() {
       </section>
 
       {/* Waitlist */}
-      <section id="waitlist" className="py-28 px-6 bg-white relative overflow-hidden">
+      <section id="waitlist" className="py-28 px-6 bg-slate-50/80 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-100 rounded-full blur-3xl opacity-50" />
 
         <div className="relative z-10 max-w-lg mx-auto">
