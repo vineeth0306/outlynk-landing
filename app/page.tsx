@@ -147,62 +147,67 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right — animated product flow */}
-            <div className="hidden md:flex flex-col gap-3 animate-fade-up-d2">
+            {/* Right — orbital connectivity hub */}
+            <div className="hidden md:flex items-center justify-center h-[420px] animate-fade-up-d2">
+              <div className="relative w-80 h-80 flex items-center justify-center">
 
-              {/* Card header */}
-              <div className="bg-white rounded-2xl border border-blue-100 shadow-md p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    <span className="text-sm font-bold text-slate-700">Outlynk Activity</span>
+                {/* Dot grid bg */}
+                <div className="absolute inset-0 rounded-full"
+                  style={{ backgroundImage: 'radial-gradient(circle, #bfdbfe 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+
+                {/* Orbit rings */}
+                <div className="absolute w-64 h-64 rounded-full border border-dashed border-blue-300/50 animate-spin-slow" />
+                <div className="absolute w-48 h-48 rounded-full border border-blue-200/40 animate-spin-rev" />
+
+                {/* Pulse rings on center */}
+                <div className="absolute w-16 h-16 rounded-full bg-blue-400/20 animate-ping-slow" />
+                <div className="absolute w-16 h-16 rounded-full bg-blue-400/10 animate-ping-slow" style={{ animationDelay: '1s' }} />
+
+                {/* SVG connecting lines */}
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+                  <line x1="160" y1="160" x2="160" y2="30"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" />
+                  <line x1="160" y1="160" x2="275" y2="230"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" style={{ animationDelay: '1s' }} />
+                  <line x1="160" y1="160" x2="45" y2="230"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" style={{ animationDelay: '2s' }} />
+                </svg>
+
+                {/* Center hub */}
+                <div className="relative z-20 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-300/60">
+                  <div className="text-center">
+                    <div className="text-white font-black text-xs tracking-widest leading-tight">OUT<br/>LYNK</div>
                   </div>
-                  <span className="text-xs text-slate-400">Live</span>
                 </div>
 
-                {/* Step 1 */}
-                <div className="flex items-start gap-3 pb-3 border-b border-slate-50 animate-fade-up" style={{ animationDelay: "0.3s" }}>
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🔬</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-400 mb-0.5">Diagnostic Centre</div>
-                    <div className="text-sm font-semibold text-slate-800">LabCare uploaded CBC Report</div>
-                    <div className="text-xs text-slate-400">Shared with Dr. Sharma automatically</div>
+                {/* Node: Doctor — top */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 animate-float z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🩺</span>
+                    <span className="text-xs font-bold text-slate-600">Doctor</span>
                   </div>
-                  <span className="text-xs text-green-500 font-semibold flex-shrink-0">Just now</span>
                 </div>
 
-                {/* Step 2 */}
-                <div className="flex items-start gap-3 py-3 border-b border-slate-50 animate-fade-up" style={{ animationDelay: "0.6s" }}>
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">🩺</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-400 mb-0.5">Doctor</div>
-                    <div className="text-sm font-semibold text-slate-800">Dr. Sharma reviewed remotely</div>
-                    <div className="text-xs text-slate-400">No physical visit needed</div>
+                {/* Node: Lab — bottom right */}
+                <div className="absolute bottom-4 right-0 animate-float-d1 z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🔬</span>
+                    <span className="text-xs font-bold text-slate-600">Lab</span>
                   </div>
-                  <span className="text-xs text-blue-500 font-semibold flex-shrink-0">2 min ago</span>
                 </div>
 
-                {/* Step 3 */}
-                <div className="flex items-start gap-3 pt-3 animate-fade-up" style={{ animationDelay: "0.9s" }}>
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-lg flex-shrink-0">💊</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs text-slate-400 mb-0.5">Patient</div>
-                    <div className="text-sm font-semibold text-slate-800">Prescription issued digitally</div>
-                    <div className="text-xs text-slate-400">Saved to medical history</div>
+                {/* Node: Patient — bottom left */}
+                <div className="absolute bottom-4 left-0 animate-float-d2 z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🙋</span>
+                    <span className="text-xs font-bold text-slate-600">Patient</span>
                   </div>
-                  <span className="text-xs text-blue-500 font-semibold flex-shrink-0">3 min ago</span>
                 </div>
+
               </div>
-
-              {/* Summary chip */}
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl p-4 flex items-center gap-3 shadow-lg shadow-blue-200 animate-fade-up" style={{ animationDelay: "1.1s" }}>
-                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl flex-shrink-0">✅</div>
-                <div>
-                  <div className="text-sm font-bold text-white">No extra trip needed</div>
-                  <div className="text-xs text-blue-100">Patient consulted, diagnosed and prescribed — remotely</div>
-                </div>
-              </div>
-
             </div>
           </div>
         </div>
