@@ -125,7 +125,14 @@ export default function Home() {
       {/* Navbar */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-blue-100/60">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-extrabold text-gradient tracking-tight">Outlynk</span>
+          <div className="flex items-center gap-2">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <path d="M9 21 C4 17 4 11 9 7"   stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
+                <path d="M13 24 C5 19 5 9 13 4"  stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M17 26 C6 20 6 8 17 2"  stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
+              </svg>
+              <span className="text-xl font-extrabold text-gradient tracking-tight">outlynk</span>
+            </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
             <a href="#how-it-works" className="hover:text-blue-600 transition-colors">How it Works</a>
             <a href="#for-who" className="hover:text-blue-600 transition-colors">Who it&apos;s For</a>
@@ -510,7 +517,14 @@ export default function Home() {
       {/* Footer */}
       <footer className="section-white border-t border-slate-100 py-10 px-6 text-center">
         <div className="max-w-5xl mx-auto">
-          <div className="text-xl font-extrabold text-gradient mb-2">Outlynk</div>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <path d="M9 21 C4 17 4 11 9 7"   stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
+              <path d="M13 24 C5 19 5 9 13 4"  stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
+              <path d="M17 26 C6 20 6 8 17 2"  stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
+            </svg>
+            <span className="text-xl font-extrabold text-gradient">outlynk</span>
+          </div>
           <p className="text-slate-400 text-sm">Connecting patients, doctors, and diagnostic centres across India.</p>
           <p className="text-slate-300 text-xs mt-3">2026 Outlynk. All rights reserved.</p>
         </div>
