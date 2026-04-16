@@ -1,192 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-
-const nodeStyle: React.CSSProperties = {
-  background: "white",
-  borderRadius: "14px",
-  padding: "8px 12px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "3px",
-  border: "1px solid #dbeafe",
-  boxShadow: "0 8px 24px rgba(59,130,246,0.12)",
-  width: "68px",
-};
-
-function HeroOrbit() {
-  const [rot, setRot] = useState({ x: -20, y: 25 });
-  const [isDragging, setIsDragging] = useState(false);
-  const isDraggingRef = useRef(false);
-  const lastPos = useRef({ x: 0, y: 0 });
-  const rotRef = useRef({ x: -20, y: 25 });
-
-  useEffect(() => {
-    let id: number;
-    const tick = () => {
-      if (!isDraggingRef.current) {
-        rotRef.current.y += 0.25;
-        setRot({ x: rotRef.current.x, y: rotRef.current.y });
-      }
-      id = requestAnimationFrame(tick);
-    };
-    id = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  const startDrag = (x: number, y: number) => {
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    lastPos.current = { x, y };
-  };
-
-  const moveDrag = (x: number, y: number) => {
-    if (!isDraggingRef.current) return;
-    const dx = x - lastPos.current.x;
-    const dy = y - lastPos.current.y;
-    lastPos.current = { x, y };
-    rotRef.current.x = Math.max(-70, Math.min(70, rotRef.current.x - dy * 0.5));
-    rotRef.current.y = rotRef.current.y + dx * 0.5;
-    setRot({ x: rotRef.current.x, y: rotRef.current.y });
-  };
-
-  const endDrag = () => {
-    isDraggingRef.current = false;
-    setIsDragging(false);
-  };
-
-  return (
-    <div
-      className="hidden md:flex flex-col items-center justify-center h-[420px] animate-fade-up-d2 select-none"
-      style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
-      onMouseDown={(e) => startDrag(e.clientX, e.clientY)}
-      onMouseMove={(e) => moveDrag(e.clientX, e.clientY)}
-      onMouseUp={endDrag}
-      onMouseLeave={endDrag}
-      onTouchStart={(e) => startDrag(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchMove={(e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY)}
-      onTouchEnd={endDrag}
-    >
-      {/* Perspective wrapper */}
-      <div style={{ perspective: "700px", perspectiveOrigin: "center center" }}>
-        {/* 3D rotating scene */}
-        <div
-          style={{
-            width: "300px",
-            height: "300px",
-            position: "relative",
-            transformStyle: "preserve-3d",
-            transform: `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`,
-          }}
-        >
-          {/* Equatorial orbit ring — flat/horizontal */}
-          <div style={{
-            position: "absolute", inset: "20px", borderRadius: "50%",
-            border: "1.5px dashed rgba(147,197,253,0.65)",
-            transform: "rotateX(90deg)",
-          }} />
-
-          {/* Frontal orbit ring */}
-          <div style={{
-            position: "absolute", inset: "12px", borderRadius: "50%",
-            border: "1px solid rgba(147,197,253,0.4)",
-          }} />
-
-          {/* Side orbit ring — perpendicular */}
-          <div style={{
-            position: "absolute", inset: "30px", borderRadius: "50%",
-            border: "1px dashed rgba(96,165,250,0.45)",
-            transform: "rotateY(90deg)",
-          }} />
-
-          {/* Dot grid background */}
-          <div style={{
-            position: "absolute", inset: 0, borderRadius: "50%",
-            backgroundImage: "radial-gradient(circle, #bfdbfe 1px, transparent 1px)",
-            backgroundSize: "20px 20px", opacity: 0.35,
-          }} />
-
-          {/* SVG connecting lines */}
-          <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox="0 0 300 300">
-            <line x1="150" y1="150" x2="150" y2="18"
-              stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-              className="animate-flow" />
-            <line x1="150" y1="150" x2="262" y2="218"
-              stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-              className="animate-flow" style={{ animationDelay: "1s" }} />
-            <line x1="150" y1="150" x2="38" y2="218"
-              stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-              className="animate-flow" style={{ animationDelay: "2s" }} />
-          </svg>
-
-          {/* Pulse ring at center */}
-          <div className="animate-ping-slow" style={{
-            position: "absolute", top: "50%", left: "50%",
-            width: "80px", height: "80px", borderRadius: "50%",
-            background: "rgba(96,165,250,0.22)",
-            transform: "translate(-50%, -50%) translateZ(0)",
-          }} />
-
-          {/* Center hub */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            width: "80px", height: "80px", borderRadius: "50%",
-            background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-            transform: "translate(-50%, -50%) translateZ(2px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 32px rgba(59,130,246,0.55), 0 0 64px rgba(59,130,246,0.2)",
-          }}>
-            <div style={{ color: "white", fontWeight: 900, fontSize: "9px", letterSpacing: "0.15em", textAlign: "center", lineHeight: 1.3 }}>
-              OUT<br />LYNK
-            </div>
-          </div>
-
-          {/* Doctor node — top, Z+40px depth */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%) translate3d(0px, -118px, 40px)",
-            zIndex: 20,
-          }}>
-            <div style={nodeStyle}>
-              <span style={{ fontSize: "22px" }}>🩺</span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "#475569" }}>Doctor</span>
-            </div>
-          </div>
-
-          {/* Lab node — bottom-right, Z-35px */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%) translate3d(102px, 70px, -35px)",
-            zIndex: 20,
-          }}>
-            <div style={nodeStyle}>
-              <span style={{ fontSize: "22px" }}>🔬</span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "#475569" }}>Lab</span>
-            </div>
-          </div>
-
-          {/* Patient node — bottom-left, Z+50px */}
-          <div style={{
-            position: "absolute", top: "50%", left: "50%",
-            transform: "translate(-50%, -50%) translate3d(-102px, 70px, 50px)",
-            zIndex: 20,
-          }}>
-            <div style={nodeStyle}>
-              <span style={{ fontSize: "22px" }}>🙋</span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: "#475569" }}>Patient</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Drag hint */}
-      <p style={{ fontSize: "11px", color: "#94a3b8", marginTop: "14px", letterSpacing: "0.05em" }}>
-        Drag to rotate
-      </p>
-    </div>
-  );
-}
+import { useState } from "react";
 
 type Role = "patient" | "doctor" | "lab";
 
@@ -333,8 +147,68 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right — 3D rotatable orbital hub */}
-            <HeroOrbit />
+            {/* Right — orbital connectivity hub */}
+            <div className="hidden md:flex items-center justify-center h-[420px] animate-fade-up-d2">
+              <div className="relative w-80 h-80 flex items-center justify-center">
+
+                {/* Dot grid bg */}
+                <div className="absolute inset-0 rounded-full"
+                  style={{ backgroundImage: 'radial-gradient(circle, #bfdbfe 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+
+                {/* Orbit rings */}
+                <div className="absolute w-64 h-64 rounded-full border border-dashed border-blue-300/50 animate-spin-slow" />
+                <div className="absolute w-48 h-48 rounded-full border border-blue-200/40 animate-spin-rev" />
+
+                {/* Pulse rings on center */}
+                <div className="absolute w-16 h-16 rounded-full bg-blue-400/20 animate-ping-slow" />
+                <div className="absolute w-16 h-16 rounded-full bg-blue-400/10 animate-ping-slow" style={{ animationDelay: '1s' }} />
+
+                {/* SVG connecting lines */}
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+                  <line x1="160" y1="160" x2="160" y2="30"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" />
+                  <line x1="160" y1="160" x2="275" y2="230"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" style={{ animationDelay: '1s' }} />
+                  <line x1="160" y1="160" x2="45" y2="230"
+                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
+                    className="animate-flow" style={{ animationDelay: '2s' }} />
+                </svg>
+
+                {/* Center hub */}
+                <div className="relative z-20 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-300/60">
+                  <div className="text-center">
+                    <div className="text-white font-black text-xs tracking-widest leading-tight">OUT<br/>LYNK</div>
+                  </div>
+                </div>
+
+                {/* Node: Doctor — top */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 animate-float z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🩺</span>
+                    <span className="text-xs font-bold text-slate-600">Doctor</span>
+                  </div>
+                </div>
+
+                {/* Node: Lab — bottom right */}
+                <div className="absolute bottom-4 right-0 animate-float-d1 z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🔬</span>
+                    <span className="text-xs font-bold text-slate-600">Lab</span>
+                  </div>
+                </div>
+
+                {/* Node: Patient — bottom left */}
+                <div className="absolute bottom-4 left-0 animate-float-d2 z-10">
+                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
+                    <span className="text-2xl">🙋</span>
+                    <span className="text-xs font-bold text-slate-600">Patient</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
         </div>
       </section>
