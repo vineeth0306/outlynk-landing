@@ -34,11 +34,11 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           fields: {
             Name: name.trim(),
-            Email: email.toLowerCase().trim(),
-            Mobile: mobile?.trim() || "",
-            City: city?.trim() || "",
-            Role: role.charAt(0).toUpperCase() + role.slice(1),
-            "Submitted At": new Date().toISOString(),
+            email: email.toLowerCase().trim(),
+            number: mobile?.trim() || "",
+            city: city?.trim() || "",
+            role: role.charAt(0).toUpperCase() + role.slice(1),
+            "submitted at": new Date().toISOString(),
           },
         }),
       }
