@@ -1,8 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type Role = "patient" | "doctor" | "lab";
+
+// Fires once when element scrolls into view
+function useInView(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+// Inline style for a scroll-reveal element
+function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
+  return {
+    opacity: visible ? 1 : 0,
+    transform: visible ? "translateY(0px) scale(1)" : "translateY(40px) scale(0.97)",
+    transition: `opacity 0.7s ease ${delayMs}ms, transform 0.7s ease ${delayMs}ms`,
+    willChange: "transform, opacity",
+  };
+}
 
 const roles: { id: Role; label: string; icon: string; description: string }[] = [
   {
@@ -58,13 +85,18 @@ const problems = [
   { label: "Finally", title: "And it is often unclear...", detail: "Do you need a follow-up? Where are your reports?" },
 ];
 
-
 export default function Home() {
   const [activeRole, setActiveRole] = useState<Role>("patient");
   const [formData, setFormData] = useState({ name: "", mobile: "", email: "", city: "" });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Scroll reveal refs — one per section
+  const problem = useInView();
+  const steps_  = useInView();
+  const forWho  = useInView();
+  const waitlist = useInView();
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -183,7 +215,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Node: Doctor — top */}
+                {/* Node: Doctor */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 animate-float z-10">
                   <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
                     <span className="text-2xl">🩺</span>
@@ -191,7 +223,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Node: Lab — bottom right */}
+                {/* Node: Lab */}
                 <div className="absolute bottom-4 right-0 animate-float-d1 z-10">
                   <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
                     <span className="text-2xl">🔬</span>
@@ -199,7 +231,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Node: Patient — bottom left */}
+                {/* Node: Patient */}
                 <div className="absolute bottom-4 left-0 animate-float-d2 z-10">
                   <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
                     <span className="text-2xl">🙋</span>
@@ -214,22 +246,35 @@ export default function Home() {
       </section>
 
       {/* Problem */}
-      <section className="section-white py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
+      <section className="section-white py-24 px-6 overflow-hidden">
+        <div className="max-w-5xl mx-auto" ref={problem.ref}>
+
+          {/* Heading */}
+          <div className="text-center mb-14" style={reveal(problem.visible, 0)}>
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
               A Situation Many Patients Recognise
             </h2>
           </div>
 
-          {/* Connected step cards */}
+          {/* Cards + connecting line */}
           <div className="relative">
-            {/* Connecting dashed line */}
-            <div className="hidden md:block absolute top-10 left-[20%] right-[20%] border-t-2 border-dashed border-blue-200 z-0" />
+            {/* Connecting dashed line — animates width when section appears */}
+            <div
+              className="hidden md:block absolute top-10 left-[20%] right-[20%] border-t-2 border-dashed border-blue-200 z-0"
+              style={{
+                transformOrigin: "left center",
+                transform: problem.visible ? "scaleX(1)" : "scaleX(0)",
+                transition: "transform 0.9s ease 0.35s",
+              }}
+            />
 
             <div className="grid md:grid-cols-3 gap-6 relative z-10">
-              {problems.map((p) => (
-                <div key={p.label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 card-hover">
+              {problems.map((p, i) => (
+                <div
+                  key={p.label}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 card-hover"
+                  style={reveal(problem.visible, 120 + i * 130)}
+                >
                   <div className="inline-block bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full mb-4">
                     {p.label}
                   </div>
@@ -239,7 +284,7 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="mt-8 text-center">
+            <div className="mt-8 text-center" style={reveal(problem.visible, 550)}>
               <span className="inline-block bg-blue-50 border border-blue-100 text-blue-700 text-sm font-semibold px-6 py-3 rounded-full">
                 Outlynk was built to address this
               </span>
@@ -249,9 +294,11 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="section-tint py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
+      <section id="how-it-works" className="section-tint py-24 px-6 overflow-hidden">
+        <div className="max-w-5xl mx-auto" ref={steps_.ref}>
+
+          {/* Heading */}
+          <div className="text-center mb-14" style={reveal(steps_.visible, 0)}>
             <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-4 py-1.5 rounded-full mb-3">
               Built to support every role in healthcare
             </span>
@@ -260,11 +307,13 @@ export default function Home() {
             </h2>
           </div>
 
+          {/* Step cards */}
           <div className="grid md:grid-cols-3 gap-6">
-            {steps.map((step) => (
+            {steps.map((step, i) => (
               <div
                 key={step.number}
                 className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm card-hover"
+                style={reveal(steps_.visible, 100 + i * 150)}
               >
                 <div className="flex items-center justify-between mb-5">
                   <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${step.color} text-white text-xl flex items-center justify-center shadow-md`}>
@@ -279,7 +328,10 @@ export default function Home() {
           </div>
 
           {/* Result banner */}
-          <div className="mt-10 animate-gradient-x bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl p-7 text-white text-center shadow-lg shadow-blue-200">
+          <div
+            className="mt-10 animate-gradient-x bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 rounded-2xl p-7 text-white text-center shadow-lg shadow-blue-200"
+            style={reveal(steps_.visible, 550)}
+          >
             <div className="font-extrabold text-xl mb-1">The result?</div>
             <p className="text-blue-100 max-w-xl mx-auto text-sm leading-relaxed">
               Doctor reviews reports from their phone. Decides if a visit is needed. Prescription is digital. Everything lives in your medical history.
@@ -289,9 +341,11 @@ export default function Home() {
       </section>
 
       {/* Who it's for */}
-      <section id="for-who" className="section-white py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
+      <section id="for-who" className="section-white py-24 px-6 overflow-hidden">
+        <div className="max-w-5xl mx-auto" ref={forWho.ref}>
+
+          {/* Heading */}
+          <div className="text-center mb-14" style={reveal(forWho.visible, 0)}>
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">
               Built for Everyone in the Chain
             </h2>
@@ -300,11 +354,13 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Role cards */}
           <div className="grid md:grid-cols-3 gap-5">
-            {roles.map((role) => (
+            {roles.map((role, i) => (
               <div
                 key={role.id}
                 className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm card-hover"
+                style={reveal(forWho.visible, 100 + i * 120)}
               >
                 <div className="w-12 h-12 rounded-xl icon-box flex items-center justify-center text-2xl mb-4 shadow-sm">
                   {role.icon}
@@ -315,9 +371,9 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="mt-8 text-center">
+          <div className="mt-8 text-center" style={reveal(forWho.visible, 460)}>
             <a href="#waitlist" className="shimmer-btn text-white font-bold px-8 py-3.5 rounded-full shadow-lg shadow-blue-200 hover:opacity-90 transition-opacity text-sm inline-block">
-              Register Interest →
+              Register Interest
             </a>
           </div>
         </div>
@@ -325,8 +381,9 @@ export default function Home() {
 
       {/* Waitlist */}
       <section id="waitlist" className="section-tint py-24 px-6">
-        <div className="max-w-xl mx-auto">
-          <div className="text-center mb-10">
+        <div className="max-w-xl mx-auto" ref={waitlist.ref}>
+
+          <div className="text-center mb-10" style={reveal(waitlist.visible, 0)}>
             <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 text-xs font-bold px-4 py-2 rounded-full mb-4">
               Register Interest
             </div>
@@ -339,7 +396,7 @@ export default function Home() {
           </div>
 
           {/* Role selector */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6" style={reveal(waitlist.visible, 150)}>
             {roles.map((role) => (
               <button
                 key={role.id}
@@ -358,93 +415,95 @@ export default function Home() {
             ))}
           </div>
 
-          {submitted ? (
-            <div className="text-center bg-white border border-blue-100 rounded-2xl p-12 shadow-lg">
-              <div className="w-16 h-16 rounded-full icon-box-blue flex items-center justify-center mx-auto mb-5 text-3xl shadow-lg shadow-blue-200">
-                🎉
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">You are registered!</h3>
-              <p className="text-slate-500 text-sm">
-                We will reach out as we get ready to launch for{" "}
-                {activeRole === "lab" ? "diagnostic centres" : activeRole + "s"} in your city.
-              </p>
-              <button onClick={() => setSubmitted(false)} className="mt-6 text-blue-600 text-sm font-semibold hover:underline">
-                Register another
-              </button>
-            </div>
-          ) : (
-            <div className="bg-white rounded-2xl shadow-lg border border-blue-50 p-8">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Full Name <span className="text-blue-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-                    placeholder={activeRole === "lab" ? "Diagnostic Centre Name" : activeRole === "doctor" ? "Dr. Full Name" : "Your full name"}
-                  />
+          <div style={reveal(waitlist.visible, 280)}>
+            {submitted ? (
+              <div className="text-center bg-white border border-blue-100 rounded-2xl p-12 shadow-lg">
+                <div className="w-16 h-16 rounded-full icon-box-blue flex items-center justify-center mx-auto mb-5 text-3xl shadow-lg shadow-blue-200">
+                  🎉
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Mobile Number <span className="text-slate-400 font-normal text-xs">(optional)</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.mobile}
-                    onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-                    placeholder="+91 98765 43210"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    Email Address <span className="text-blue-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-                    placeholder="you@example.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                    City <span className="text-slate-400 font-normal text-xs">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
-                    placeholder="Bengaluru, Mumbai, Hyderabad..."
-                  />
-                </div>
-
-                {error && (
-                  <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
-                    {error}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full shimmer-btn text-white font-bold py-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed text-sm shadow-lg shadow-blue-200"
-                >
-                  {loading ? "Submitting..." : `Register as ${activeRole === "lab" ? "Diagnostic Centre" : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}`}
-                </button>
-                <p className="text-xs text-slate-400 text-center">
-                  No spam. We will only reach out when we are ready to launch in your city.
+                <h3 className="text-2xl font-bold text-slate-900 mb-2">You are registered!</h3>
+                <p className="text-slate-500 text-sm">
+                  We will reach out as we get ready to launch for{" "}
+                  {activeRole === "lab" ? "diagnostic centres" : activeRole + "s"} in your city.
                 </p>
-              </form>
-            </div>
-          )}
+                <button onClick={() => setSubmitted(false)} className="mt-6 text-blue-600 text-sm font-semibold hover:underline">
+                  Register another
+                </button>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl shadow-lg border border-blue-50 p-8">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Full Name <span className="text-blue-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                      placeholder={activeRole === "lab" ? "Diagnostic Centre Name" : activeRole === "doctor" ? "Dr. Full Name" : "Your full name"}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Mobile Number <span className="text-slate-400 font-normal text-xs">(optional)</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.mobile}
+                      onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Email Address <span className="text-blue-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      City <span className="text-slate-400 font-normal text-xs">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+                      placeholder="Bengaluru, Mumbai, Hyderabad..."
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full shimmer-btn text-white font-bold py-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed text-sm shadow-lg shadow-blue-200"
+                  >
+                    {loading ? "Submitting..." : `Register as ${activeRole === "lab" ? "Diagnostic Centre" : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}`}
+                  </button>
+                  <p className="text-xs text-slate-400 text-center">
+                    No spam. We will only reach out when we are ready to launch in your city.
+                  </p>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
