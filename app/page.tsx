@@ -311,15 +311,13 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Mobile Number *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Mobile Number <span className="text-slate-400 font-normal">(optional)</span></label>
                 <input
                   type="tel"
-                  required
                   value={formData.mobile}
                   onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                   className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="+91 98765 43210"
-                  pattern="[0-9+\s\-]+"
                 />
               </div>
 
@@ -336,10 +334,9 @@ export default function Home() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">City *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">City <span className="text-slate-400 font-normal">(optional)</span></label>
                 <input
                   type="text"
-                  required
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
