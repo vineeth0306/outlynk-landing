@@ -109,14 +109,12 @@ export default function Home() {
             Built for India · Registering Interest
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
-            Your diagnostic reports
-            <span className="text-blue-600"> reach your doctor</span>
+            India&apos;s healthcare is fragmented.
             <br />
-            the moment they&apos;re ready.
+            <span className="text-blue-600">Outlynk connects the chain.</span>
           </h1>
           <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Outlynk connects patients, doctors, and diagnostic centres on one platform, eliminating
-            unnecessary trips and putting your medical history in one place.
+            One platform where diagnostic reports flow directly from labs to doctors, consultations happen remotely, and your medical history lives in one place.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -132,22 +130,6 @@ export default function Home() {
               See How It Works
             </a>
           </div>
-        </div>
-      </section>
-
-      {/* Stats bar */}
-      <section className="border-y border-slate-100 bg-white py-8 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8 text-center">
-          {[
-            { value: "3", label: "User types connected" },
-            { value: "1 platform", label: "For reports, consults & prescriptions" },
-            { value: "0 extra trips", label: "Goal for every patient" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <div className="text-2xl font-bold text-blue-600">{stat.value}</div>
-              <div className="text-sm text-slate-500 mt-1">{stat.label}</div>
-            </div>
-          ))}
         </div>
       </section>
 
