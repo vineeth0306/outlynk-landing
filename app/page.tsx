@@ -30,17 +30,18 @@ function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
 
 /* ─── Canvas particle-network hero animation ──────────────────────── */
 function HeroAnimation() {
-  const canvasRef     = useRef<HTMLCanvasElement>(null);
-  const canvasWrapRef = useRef<HTMLDivElement>(null);
-  const phoneRef      = useRef<HTMLDivElement>(null);
-  const nodeRefs      = useRef<(HTMLDivElement | null)[]>([null, null, null]);
-  const statusRef     = useRef<HTMLParagraphElement | null>(null);
+  const canvasRef      = useRef<HTMLCanvasElement>(null);
+  const canvasWrapRef  = useRef<HTMLDivElement>(null);
+  const phoneRef       = useRef<HTMLDivElement>(null);
+  const phoneShellRef  = useRef<HTMLDivElement>(null);
+  const phoneBodyRef   = useRef<HTMLDivElement>(null);
+  const nodeRefs       = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const statusRef      = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // HiDPI canvas
     const dpr = window.devicePixelRatio || 1;
     const W = 420, H = 420;
     canvas.width  = W * dpr;
@@ -53,7 +54,6 @@ function HeroAnimation() {
     const cx = W / 2, cy = H / 2;
     const OR = 148;
 
-    // ── Particles ──────────────────────────────────────────────────
     const N = 52;
     const px  = Array.from({ length: N }, () => Math.random() * W);
     const py  = Array.from({ length: N }, () => Math.random() * H);
@@ -61,13 +61,9 @@ function HeroAnimation() {
     const pvy = Array.from({ length: N }, () => (Math.random() - 0.5) * 0.28);
     const pr  = Array.from({ length: N }, () => Math.random() * 1.4 + 0.5);
 
-    // ── Data packets ───────────────────────────────────────────────
     const packets: { t: number; hi: number }[] = [];
-
     const HUB_OFFSETS = [240, 120, 0];
 
-    // ── Step sequencing ────────────────────────────────────────────
-    // steps 0-4: connection animation  |  step 5: phone reveal
     const STATUS_MSGS = [
       "", "Patient connecting to Outlynk...", "Lab connecting to Outlynk...",
       "Doctor connecting to Outlynk...", "All connected. Healthcare, simplified.",
@@ -75,37 +71,89 @@ function HeroAnimation() {
     ];
 
     let stepState = 0;
-
-    const showPhone = (on: boolean) => {
-      const cw = canvasWrapRef.current;
-      const ph = phoneRef.current;
-      if (cw) cw.style.opacity = on ? "0" : "1";
-      if (ph) ph.style.opacity = on ? "1" : "0";
-      if (ph) ph.style.transform = on
-        ? "translate(-50%,-50%) scale(1)"
-        : "translate(-50%,-50%) scale(0.82)";
-    };
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     const setStep = (s: number) => {
       stepState = s;
+      // clear pending morph timeouts on any step change
+      timeouts.forEach(clearTimeout);
+      timeouts.length = 0;
+
       if (statusRef.current) {
         statusRef.current.textContent = STATUS_MSGS[s];
         statusRef.current.style.opacity = s === 0 ? "0" : "1";
         statusRef.current.style.color =
           s === 5 ? "#0891b2" : s === 4 ? "#2563eb" : "#64748b";
       }
+
       if (s === 5) {
-        showPhone(true);
-        nodeRefs.current.forEach(el => {
-          if (!el) return;
-          el.style.opacity = "0";
-        });
+        // ── hide nodes ──────────────────────────────────────────────
+        nodeRefs.current.forEach(el => { if (el) el.style.opacity = "0"; });
+
+        // ── canvas fades fast so hub disappears ─────────────────────
+        const cw = canvasWrapRef.current;
+        if (cw) { cw.style.transition = "opacity 0.22s ease"; cw.style.opacity = "0"; }
+
+        // ── phone starts as a tiny glowing blue circle (= hub) ──────
+        const ph    = phoneRef.current;
+        const shell = phoneShellRef.current;
+        const body  = phoneBodyRef.current;
+        if (ph && shell && body) {
+          body.style.transition  = "none";
+          body.style.opacity     = "0";
+
+          ph.style.transition    = "none";
+          ph.style.opacity       = "1";
+          ph.style.transform     = "translate(-50%,-50%) scale(0.17)";
+
+          shell.style.transition  = "none";
+          shell.style.borderRadius = "50%";
+          shell.style.background  = "linear-gradient(135deg, #60a5fa 0%, #0891b2 100%)";
+          shell.style.border      = "none";
+          shell.style.boxShadow   =
+            "0 0 0 10px rgba(96,165,250,0.3), 0 0 55px rgba(59,130,246,0.6)";
+        }
+
+        // ── 80 ms later: grow + morph into phone ────────────────────
+        timeouts.push(setTimeout(() => {
+          const ph2    = phoneRef.current;
+          const shell2 = phoneShellRef.current;
+          if (!ph2 || !shell2) return;
+
+          ph2.style.transition   = "transform 0.82s cubic-bezier(0.34,1.56,0.64,1)";
+          ph2.style.transform    = "translate(-50%,-50%) scale(1)";
+
+          shell2.style.transition =
+            "border-radius 0.7s ease 0.12s, background 0.55s ease 0.18s, " +
+            "border 0.4s ease 0.22s, box-shadow 0.55s ease 0.18s";
+          shell2.style.borderRadius = "40px";
+          shell2.style.background   = "#0f172a";
+          shell2.style.border       = "6px solid #1e293b";
+          shell2.style.boxShadow    =
+            "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), " +
+            "inset 0 0 0 1px rgba(255,255,255,0.07)";
+        }, 80));
+
+        // ── 800 ms later: fade in screen content ────────────────────
+        timeouts.push(setTimeout(() => {
+          const body2 = phoneBodyRef.current;
+          if (body2) { body2.style.transition = "opacity 0.55s ease"; body2.style.opacity = "1"; }
+        }, 800));
+
       } else {
-        showPhone(false);
+        // ── reset: hide phone, restore canvas ───────────────────────
+        const cw = canvasWrapRef.current;
+        if (cw) { cw.style.transition = "none"; cw.style.opacity = "1"; }
+
+        const ph   = phoneRef.current;
+        const body = phoneBodyRef.current;
+        if (ph)   { ph.style.transition = "none"; ph.style.opacity = "0"; }
+        if (body) { body.style.transition = "none"; body.style.opacity = "0"; }
+
         nodeRefs.current.forEach((el, i) => {
           if (!el) return;
-          el.style.opacity = s > i ? "1" : "0";
-          el.style.transform = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
+          el.style.opacity     = s > i ? "1" : "0";
+          el.style.transform   = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
           el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
         });
       }
@@ -114,13 +162,12 @@ function HeroAnimation() {
     let angle = 0, frame = 0;
     let animId: number;
 
-    // frame milestones: connect1, connect2, connect3, all-glow, phone-in, reset
-    const STEPS_AT = [0, 22, 80, 138, 196, 290, 460];
+    // milestones: -, connect1, connect2, connect3, all-glow, phone, reset
+    const STEPS_AT = [0, 22, 80, 138, 196, 290, 470];
 
     const tick = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // ── Particles ────────────────────────────────────────────────
       for (let i = 0; i < N; i++) {
         px[i] = (px[i] + pvx[i] + W) % W;
         py[i] = (py[i] + pvy[i] + H) % H;
@@ -130,7 +177,6 @@ function HeroAnimation() {
         ctx.fill();
       }
 
-      // ── Particle connections ──────────────────────────────────────
       for (let i = 0; i < N; i++) {
         for (let j = i + 1; j < N; j++) {
           const dx = px[i] - px[j], dy = py[i] - py[j];
@@ -146,7 +192,6 @@ function HeroAnimation() {
         }
       }
 
-      // ── Orbit rings ───────────────────────────────────────────────
       [[OR, [6,4], 0.28], [OR*0.68, [], 0.16], [OR*0.42, [3,4], 0.1]].forEach(([r, dash, alpha]) => {
         ctx.beginPath();
         ctx.arc(cx, cy, r as number, 0, Math.PI * 2);
@@ -157,7 +202,6 @@ function HeroAnimation() {
         ctx.setLineDash([]);
       });
 
-      // ── Hub node positions ────────────────────────────────────────
       angle += 0.22;
       const hx: number[] = [], hy: number[] = [];
       HUB_OFFSETS.forEach((off, i) => {
@@ -168,7 +212,6 @@ function HeroAnimation() {
         if (el) { el.style.left = `${hx[i]}px`; el.style.top = `${hy[i]}px`; }
       });
 
-      // ── Connection lines ──────────────────────────────────────────
       for (let i = 0; i < 3; i++) {
         if (stepState > i && stepState < 5) {
           ctx.beginPath();
@@ -183,7 +226,6 @@ function HeroAnimation() {
         }
       }
 
-      // ── Data packets ──────────────────────────────────────────────
       for (let i = packets.length - 1; i >= 0; i--) {
         packets[i].t += 0.024;
         if (packets[i].t >= 1) { packets.splice(i, 1); continue; }
@@ -203,11 +245,10 @@ function HeroAnimation() {
         packets.push({ t: 0, hi: Math.floor(Math.random() * Math.min(stepState, 3)) });
       }
 
-      // ── Center glow ───────────────────────────────────────────────
       const pulse = 0.75 + 0.25 * Math.sin(frame * 0.055);
-      const glowR = (stepState === 4 || stepState === 5) ? 58 * pulse : 44;
+      const glowR = stepState === 4 ? 58 * pulse : 44;
       const cg0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
-      cg0.addColorStop(0, `rgba(59,130,246,${(stepState === 4 || stepState === 5) ? 0.5 * pulse : 0.22})`);
+      cg0.addColorStop(0, `rgba(59,130,246,${stepState === 4 ? 0.5 * pulse : 0.22})`);
       cg0.addColorStop(1, "rgba(59,130,246,0)");
       ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
       ctx.fillStyle = cg0; ctx.fill();
@@ -219,24 +260,25 @@ function HeroAnimation() {
         ctx.lineWidth = 2; ctx.stroke();
       }
 
-      // ── Center hub ────────────────────────────────────────────────
-      const hubG = ctx.createLinearGradient(cx - 30, cy - 30, cx + 30, cy + 30);
-      hubG.addColorStop(0, "#60a5fa");
-      hubG.addColorStop(1, "#0891b2");
-      ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2);
-      ctx.fillStyle = hubG;
-      ctx.shadowColor = "rgba(59,130,246,0.65)";
-      ctx.shadowBlur = 20;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = "rgba(255,255,255,0.96)";
-      ctx.font = "bold 7.5px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("OUT",  cx, cy - 5.5);
-      ctx.fillText("LYNK", cx, cy + 5.5);
+      // hub — hidden during step 5 (canvas is opacity 0 by then)
+      if (stepState < 5) {
+        const hubG = ctx.createLinearGradient(cx - 30, cy - 30, cx + 30, cy + 30);
+        hubG.addColorStop(0, "#60a5fa");
+        hubG.addColorStop(1, "#0891b2");
+        ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+        ctx.fillStyle = hubG;
+        ctx.shadowColor = "rgba(59,130,246,0.65)";
+        ctx.shadowBlur = 20;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(255,255,255,0.96)";
+        ctx.font = "bold 7.5px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("OUT",  cx, cy - 5.5);
+        ctx.fillText("LYNK", cx, cy + 5.5);
+      }
 
-      // ── Step sequencing ───────────────────────────────────────────
       frame++;
       if      (frame === STEPS_AT[1]) setStep(1);
       else if (frame === STEPS_AT[2]) setStep(2);
@@ -249,15 +291,15 @@ function HeroAnimation() {
     };
 
     animId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animId);
+    return () => { cancelAnimationFrame(animId); timeouts.forEach(clearTimeout); };
   }, []);
 
   return (
     <div className="hidden md:flex flex-col items-center justify-center h-[460px] animate-fade-up-d2">
       <div className="relative" style={{ width: 420, height: 420 }}>
 
-        {/* Canvas + node cards — fades out when phone appears */}
-        <div ref={canvasWrapRef} className="absolute inset-0" style={{ transition: "opacity 0.75s ease" }}>
+        {/* Canvas + node cards */}
+        <div ref={canvasWrapRef} className="absolute inset-0">
           <canvas ref={canvasRef} className="absolute inset-0" />
 
           {[
@@ -285,40 +327,39 @@ function HeroAnimation() {
           ))}
         </div>
 
-        {/* Phone mockup overlay — fades in at step 5 */}
+        {/* Phone — starts as tiny blue circle at center, morphs into phone */}
         <div
           ref={phoneRef}
           className="absolute pointer-events-none"
-          style={{
-            top: "50%", left: "50%",
-            transform: "translate(-50%,-50%) scale(0.82)",
-            opacity: 0,
-            transition: "opacity 0.75s ease, transform 0.75s cubic-bezier(0.34,1.56,0.64,1)",
-          }}
+          style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%) scale(0.17)", opacity: 0 }}
         >
-          {/* Phone shell */}
-          <div style={{
-            width: 192, height: 388,
-            background: "#0f172a",
-            borderRadius: 40,
-            border: "6px solid #1e293b",
-            boxShadow: "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.07)",
-            position: "relative",
-            overflow: "hidden",
-            display: "flex",
-            flexDirection: "column",
-          }}>
+          {/* Shell — morphs from circle to phone body */}
+          <div
+            ref={phoneShellRef}
+            style={{
+              width: 192, height: 388,
+              background: "#0f172a",
+              borderRadius: 40,
+              border: "6px solid #1e293b",
+              boxShadow: "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.07)",
+              position: "relative",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             {/* Dynamic island */}
             <div style={{
               width: 76, height: 22, background: "#000",
               borderRadius: 12, margin: "9px auto 0", flexShrink: 0,
             }} />
 
-            {/* Screen */}
-            <div style={{
+            {/* Screen — fades in after shell morphs */}
+            <div ref={phoneBodyRef} style={{
               flex: 1, background: "#f8faff",
               margin: "6px 0 0", borderRadius: "0 0 34px 34px",
               overflow: "hidden", display: "flex", flexDirection: "column",
+              opacity: 0,
             }}>
               {/* App header */}
               <div style={{
