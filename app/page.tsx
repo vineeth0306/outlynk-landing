@@ -354,88 +354,63 @@ function HeroAnimation() {
               borderRadius: 12, margin: "9px auto 0", flexShrink: 0,
             }} />
 
-            {/* Screen — fades in after shell morphs */}
+            {/* Screen — home screen with app icons */}
             <div ref={phoneBodyRef} style={{
-              flex: 1, background: "#f8faff",
+              flex: 1,
+              background: "linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 40%, #0891b2 100%)",
               margin: "6px 0 0", borderRadius: "0 0 34px 34px",
               overflow: "hidden", display: "flex", flexDirection: "column",
-              opacity: 0,
+              alignItems: "center", justifyContent: "center",
+              opacity: 0, padding: "10px 0 18px",
             }}>
-              {/* App header */}
-              <div style={{
-                background: "linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%)",
-                padding: "10px 14px 16px", flexShrink: 0,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8 }}>
-                  <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
-                    <path d="M9 21 C4 17 4 11 9 7"  stroke="white" strokeWidth="3" strokeLinecap="round"/>
-                    <path d="M13 24 C5 19 5 9 13 4" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"/>
-                    <path d="M17 26 C6 20 6 8 17 2" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round"/>
+              {/* Time */}
+              <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 22, fontWeight: 700, marginBottom: 2 }}>9:41</div>
+              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 7.5, marginBottom: 18 }}>Thursday, 17 April</div>
+
+              {/* App icon grid */}
+              {[
+                [
+                  { icon: "🙋", label: "Patients",  bg: "linear-gradient(135deg,#3b82f6,#2563eb)" },
+                  { icon: "🩺", label: "Doctors",   bg: "linear-gradient(135deg,#06b6d4,#0891b2)" },
+                  { icon: "🔬", label: "Labs",      bg: "linear-gradient(135deg,#8b5cf6,#6d28d9)" },
+                ],
+                [
+                  { icon: "📋", label: "Reports",   bg: "linear-gradient(135deg,#10b981,#059669)" },
+                  { icon: "💊", label: "Meds",      bg: "linear-gradient(135deg,#f59e0b,#d97706)" },
+                  { icon: "🏥", label: "Hospitals", bg: "linear-gradient(135deg,#ef4444,#dc2626)" },
+                ],
+              ].map((row, ri) => (
+                <div key={ri} style={{ display: "flex", gap: 14, marginBottom: 14 }}>
+                  {row.map(app => (
+                    <div key={app.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                      <div style={{
+                        width: 34, height: 34, borderRadius: 9,
+                        background: app.bg,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 16,
+                        boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
+                      }}>{app.icon}</div>
+                      <span style={{ color: "rgba(255,255,255,0.82)", fontSize: 6.5, fontWeight: 600 }}>{app.label}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+
+              {/* Outlynk — featured dock icon */}
+              <div style={{ marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 12,
+                  background: "white",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 0 0 3px rgba(255,255,255,0.35), 0 6px 20px rgba(0,0,0,0.35)",
+                }}>
+                  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+                    <path d="M9 21 C4 17 4 11 9 7"  stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
+                    <path d="M13 24 C5 19 5 9 13 4" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
+                    <path d="M17 26 C6 20 6 8 17 2" stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
                   </svg>
-                  <span style={{ color: "white", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em" }}>outlynk</span>
                 </div>
-                <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 8, marginBottom: 2 }}>Good morning, Arjun</div>
-                <div style={{ color: "white", fontSize: 11, fontWeight: 700 }}>Your health, connected.</div>
-              </div>
-
-              {/* Report-ready card */}
-              <div style={{
-                margin: "10px 9px 6px",
-                background: "white", borderRadius: 13,
-                padding: "9px 10px",
-                boxShadow: "0 2px 14px rgba(37,99,235,0.1)",
-                border: "1px solid rgba(37,99,235,0.13)",
-                flexShrink: 0,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: 8, flexShrink: 0,
-                    background: "linear-gradient(135deg, #2563eb, #0891b2)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
-                  }}>🔬</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f172a" }}>Report Ready</div>
-                    <div style={{ fontSize: 7, color: "#64748b" }}>City Diagnostics · just now</div>
-                  </div>
-                  <div style={{ width: 7, height: 7, borderRadius: 4, background: "#2563eb", flexShrink: 0 }} />
-                </div>
-                <div style={{ fontSize: 8, color: "#334155", fontWeight: 600, marginBottom: 2 }}>CBC + Blood Sugar Panel</div>
-                <div style={{ fontSize: 7, color: "#64748b" }}>Shared with Dr. Mehta automatically</div>
-              </div>
-
-              {/* Doctor reviewed card */}
-              <div style={{
-                margin: "0 9px 8px",
-                background: "linear-gradient(135deg, #eff6ff, #f0f9ff)",
-                borderRadius: 13, padding: "9px 10px",
-                border: "1px solid rgba(37,99,235,0.1)",
-                flexShrink: 0,
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <div style={{
-                    width: 28, height: 28, borderRadius: 9, flexShrink: 0,
-                    background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
-                  }}>🩺</div>
-                  <div>
-                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f172a" }}>Dr. Mehta reviewed</div>
-                    <div style={{ fontSize: 7.5, color: "#16a34a", fontWeight: 600 }}>All values normal ✓</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* CTA buttons */}
-              <div style={{ margin: "0 9px", display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
-                <div style={{
-                  background: "linear-gradient(135deg, #2563eb, #0891b2)",
-                  borderRadius: 9, padding: "8px",
-                  textAlign: "center", fontSize: 8.5, fontWeight: 700, color: "white",
-                }}>View Full Report →</div>
-                <div style={{
-                  background: "white", border: "1px solid #e2e8f0",
-                  borderRadius: 9, padding: "7px",
-                  textAlign: "center", fontSize: 8, fontWeight: 600, color: "#475569",
-                }}>Book Follow-up</div>
+                <span style={{ color: "white", fontSize: 7.5, fontWeight: 800, letterSpacing: "0.04em" }}>outlynk</span>
               </div>
             </div>
           </div>
