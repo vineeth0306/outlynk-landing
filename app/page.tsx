@@ -30,9 +30,11 @@ function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
 
 /* ─── Canvas particle-network hero animation ──────────────────────── */
 function HeroAnimation() {
-  const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const nodeRefs   = useRef<(HTMLDivElement | null)[]>([null, null, null]);
-  const statusRef  = useRef<HTMLParagraphElement | null>(null);
+  const canvasRef     = useRef<HTMLCanvasElement>(null);
+  const canvasWrapRef = useRef<HTMLDivElement>(null);
+  const phoneRef      = useRef<HTMLDivElement>(null);
+  const nodeRefs      = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const statusRef     = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,7 +51,7 @@ function HeroAnimation() {
     ctx.scale(dpr, dpr);
 
     const cx = W / 2, cy = H / 2;
-    const OR = 148; // outer orbit radius
+    const OR = 148;
 
     // ── Particles ──────────────────────────────────────────────────
     const N = 52;
@@ -62,38 +64,63 @@ function HeroAnimation() {
     // ── Data packets ───────────────────────────────────────────────
     const packets: { t: number; hi: number }[] = [];
 
-    // ── Hub config (Patient→0, Lab→1, Doctor→2) ────────────────────
-    const HUB_OFFSETS  = [240, 120, 0]; // degrees offset on orbit
-    // ── Step sequencing (direct DOM, no React re-renders) ──────────
+    const HUB_OFFSETS = [240, 120, 0];
+
+    // ── Step sequencing ────────────────────────────────────────────
+    // steps 0-4: connection animation  |  step 5: phone reveal
     const STATUS_MSGS = [
       "", "Patient connecting to Outlynk...", "Lab connecting to Outlynk...",
       "Doctor connecting to Outlynk...", "All connected. Healthcare, simplified.",
+      "Outlynk — healthcare in your pocket.",
     ];
+
     let stepState = 0;
+
+    const showPhone = (on: boolean) => {
+      const cw = canvasWrapRef.current;
+      const ph = phoneRef.current;
+      if (cw) cw.style.opacity = on ? "0" : "1";
+      if (ph) ph.style.opacity = on ? "1" : "0";
+      if (ph) ph.style.transform = on
+        ? "translate(-50%,-50%) scale(1)"
+        : "translate(-50%,-50%) scale(0.82)";
+    };
+
     const setStep = (s: number) => {
       stepState = s;
       if (statusRef.current) {
         statusRef.current.textContent = STATUS_MSGS[s];
         statusRef.current.style.opacity = s === 0 ? "0" : "1";
-        statusRef.current.style.color   = s === 4 ? "#2563eb" : "#64748b";
+        statusRef.current.style.color =
+          s === 5 ? "#0891b2" : s === 4 ? "#2563eb" : "#64748b";
       }
-      nodeRefs.current.forEach((el, i) => {
-        if (!el) return;
-        el.style.opacity = s > i ? "1" : "0";
-        el.style.transform = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
-        el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
-      });
+      if (s === 5) {
+        showPhone(true);
+        nodeRefs.current.forEach(el => {
+          if (!el) return;
+          el.style.opacity = "0";
+        });
+      } else {
+        showPhone(false);
+        nodeRefs.current.forEach((el, i) => {
+          if (!el) return;
+          el.style.opacity = s > i ? "1" : "0";
+          el.style.transform = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
+          el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
+        });
+      }
     };
 
     let angle = 0, frame = 0;
     let animId: number;
 
-    const STEPS_AT = [0, 22, 80, 138, 196, 350]; // frame numbers
+    // frame milestones: connect1, connect2, connect3, all-glow, phone-in, reset
+    const STEPS_AT = [0, 22, 80, 138, 196, 290, 460];
 
     const tick = () => {
       ctx.clearRect(0, 0, W, H);
 
-      // ── Move & draw particles ─────────────────────────────────────
+      // ── Particles ────────────────────────────────────────────────
       for (let i = 0; i < N; i++) {
         px[i] = (px[i] + pvx[i] + W) % W;
         py[i] = (py[i] + pvy[i] + H) % H;
@@ -103,7 +130,7 @@ function HeroAnimation() {
         ctx.fill();
       }
 
-      // ── Connect nearby particles ──────────────────────────────────
+      // ── Particle connections ──────────────────────────────────────
       for (let i = 0; i < N; i++) {
         for (let j = i + 1; j < N; j++) {
           const dx = px[i] - px[j], dy = py[i] - py[j];
@@ -130,21 +157,20 @@ function HeroAnimation() {
         ctx.setLineDash([]);
       });
 
-      // ── Hub positions (orbiting) ──────────────────────────────────
+      // ── Hub node positions ────────────────────────────────────────
       angle += 0.22;
       const hx: number[] = [], hy: number[] = [];
       HUB_OFFSETS.forEach((off, i) => {
         const a = ((angle + off) * Math.PI) / 180;
         hx[i] = cx + Math.cos(a) * OR;
         hy[i] = cy + Math.sin(a) * OR;
-        // update DOM card position directly
         const el = nodeRefs.current[i];
         if (el) { el.style.left = `${hx[i]}px`; el.style.top = `${hy[i]}px`; }
       });
 
       // ── Connection lines ──────────────────────────────────────────
       for (let i = 0; i < 3; i++) {
-        if (stepState > i) {
+        if (stepState > i && stepState < 5) {
           ctx.beginPath();
           ctx.moveTo(hx[i], hy[i]);
           ctx.lineTo(cx, cy);
@@ -173,20 +199,19 @@ function HeroAnimation() {
         ctx.beginPath(); ctx.arc(ppx, ppy, 2.8, 0, Math.PI * 2);
         ctx.fillStyle = "white"; ctx.fill();
       }
-      if (frame % 72 === 36 && stepState > 0) {
+      if (frame % 72 === 36 && stepState > 0 && stepState < 5) {
         packets.push({ t: 0, hi: Math.floor(Math.random() * Math.min(stepState, 3)) });
       }
 
       // ── Center glow ───────────────────────────────────────────────
       const pulse = 0.75 + 0.25 * Math.sin(frame * 0.055);
-      const glowR = stepState === 4 ? 58 * pulse : 44;
+      const glowR = (stepState === 4 || stepState === 5) ? 58 * pulse : 44;
       const cg0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
-      cg0.addColorStop(0, `rgba(59,130,246,${stepState === 4 ? 0.5 * pulse : 0.22})`);
+      cg0.addColorStop(0, `rgba(59,130,246,${(stepState === 4 || stepState === 5) ? 0.5 * pulse : 0.22})`);
       cg0.addColorStop(1, "rgba(59,130,246,0)");
       ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
       ctx.fillStyle = cg0; ctx.fill();
 
-      // extra ring when all connected
       if (stepState === 4) {
         ctx.beginPath();
         ctx.arc(cx, cy, 38 + 10 * (1 - pulse), 0, Math.PI * 2);
@@ -204,23 +229,21 @@ function HeroAnimation() {
       ctx.shadowBlur = 20;
       ctx.fill();
       ctx.shadowBlur = 0;
-      // text
       ctx.fillStyle = "rgba(255,255,255,0.96)";
       ctx.font = "bold 7.5px system-ui, sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("OUT",   cx, cy - 5.5);
-      ctx.fillText("LYNK",  cx, cy + 5.5);
+      ctx.fillText("OUT",  cx, cy - 5.5);
+      ctx.fillText("LYNK", cx, cy + 5.5);
 
       // ── Step sequencing ───────────────────────────────────────────
       frame++;
-      if (frame === STEPS_AT[1]) setStep(1);
+      if      (frame === STEPS_AT[1]) setStep(1);
       else if (frame === STEPS_AT[2]) setStep(2);
       else if (frame === STEPS_AT[3]) setStep(3);
       else if (frame === STEPS_AT[4]) setStep(4);
-      else if (frame >= STEPS_AT[5]) {
-        setStep(0); frame = 0; packets.length = 0;
-      }
+      else if (frame === STEPS_AT[5]) setStep(5);
+      else if (frame >= STEPS_AT[6]) { setStep(0); frame = 0; packets.length = 0; }
 
       animId = requestAnimationFrame(tick);
     };
@@ -232,36 +255,153 @@ function HeroAnimation() {
   return (
     <div className="hidden md:flex flex-col items-center justify-center h-[460px] animate-fade-up-d2">
       <div className="relative" style={{ width: 420, height: 420 }}>
-        {/* Canvas layer — particles, rings, lines, packets, hub */}
-        <canvas ref={canvasRef} className="absolute inset-0" />
 
-        {/* HTML overlay — emoji node cards (emojis need DOM rendering) */}
-        {[
-          { icon: "🙋", label: "Patient" },
-          { icon: "🔬", label: "Lab" },
-          { icon: "🩺", label: "Doctor" },
-        ].map((card, i) => (
-          <div
-            key={card.label}
-            ref={el => { nodeRefs.current[i] = el; }}
-            className="absolute pointer-events-none"
-            style={{
-              left: 210, top: 210,
-              transform: "translate(-50%, -50%) scale(0.6)",
-              opacity: 0,
-              transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s ease",
-            }}
-          >
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-0.5 border shadow-lg shadow-blue-100/70"
-              style={{ padding: "7px 10px", width: 64, borderColor: "rgba(219,234,254,0.6)" }}>
-              <span style={{ fontSize: 22 }}>{card.icon}</span>
-              <span className="text-[9px] font-bold text-slate-600">{card.label}</span>
+        {/* Canvas + node cards — fades out when phone appears */}
+        <div ref={canvasWrapRef} className="absolute inset-0" style={{ transition: "opacity 0.75s ease" }}>
+          <canvas ref={canvasRef} className="absolute inset-0" />
+
+          {[
+            { icon: "🙋", label: "Patient" },
+            { icon: "🔬", label: "Lab" },
+            { icon: "🩺", label: "Doctor" },
+          ].map((card, i) => (
+            <div
+              key={card.label}
+              ref={el => { nodeRefs.current[i] = el; }}
+              className="absolute pointer-events-none"
+              style={{
+                left: 210, top: 210,
+                transform: "translate(-50%, -50%) scale(0.6)",
+                opacity: 0,
+                transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s ease",
+              }}
+            >
+              <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-0.5 border shadow-lg shadow-blue-100/70"
+                style={{ padding: "7px 10px", width: 64, borderColor: "rgba(219,234,254,0.6)" }}>
+                <span style={{ fontSize: 22 }}>{card.icon}</span>
+                <span className="text-[9px] font-bold text-slate-600">{card.label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Phone mockup overlay — fades in at step 5 */}
+        <div
+          ref={phoneRef}
+          className="absolute pointer-events-none"
+          style={{
+            top: "50%", left: "50%",
+            transform: "translate(-50%,-50%) scale(0.82)",
+            opacity: 0,
+            transition: "opacity 0.75s ease, transform 0.75s cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+        >
+          {/* Phone shell */}
+          <div style={{
+            width: 192, height: 388,
+            background: "#0f172a",
+            borderRadius: 40,
+            border: "6px solid #1e293b",
+            boxShadow: "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.07)",
+            position: "relative",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+          }}>
+            {/* Dynamic island */}
+            <div style={{
+              width: 76, height: 22, background: "#000",
+              borderRadius: 12, margin: "9px auto 0", flexShrink: 0,
+            }} />
+
+            {/* Screen */}
+            <div style={{
+              flex: 1, background: "#f8faff",
+              margin: "6px 0 0", borderRadius: "0 0 34px 34px",
+              overflow: "hidden", display: "flex", flexDirection: "column",
+            }}>
+              {/* App header */}
+              <div style={{
+                background: "linear-gradient(135deg, #1d4ed8 0%, #0891b2 100%)",
+                padding: "10px 14px 16px", flexShrink: 0,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 8 }}>
+                  <svg width="13" height="13" viewBox="0 0 28 28" fill="none">
+                    <path d="M9 21 C4 17 4 11 9 7"  stroke="white" strokeWidth="3" strokeLinecap="round"/>
+                    <path d="M13 24 C5 19 5 9 13 4" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round"/>
+                    <path d="M17 26 C6 20 6 8 17 2" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span style={{ color: "white", fontSize: 10, fontWeight: 800, letterSpacing: "0.04em" }}>outlynk</span>
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 8, marginBottom: 2 }}>Good morning, Arjun</div>
+                <div style={{ color: "white", fontSize: 11, fontWeight: 700 }}>Your health, connected.</div>
+              </div>
+
+              {/* Report-ready card */}
+              <div style={{
+                margin: "10px 9px 6px",
+                background: "white", borderRadius: 13,
+                padding: "9px 10px",
+                boxShadow: "0 2px 14px rgba(37,99,235,0.1)",
+                border: "1px solid rgba(37,99,235,0.13)",
+                flexShrink: 0,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: 8, flexShrink: 0,
+                    background: "linear-gradient(135deg, #2563eb, #0891b2)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12,
+                  }}>🔬</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f172a" }}>Report Ready</div>
+                    <div style={{ fontSize: 7, color: "#64748b" }}>City Diagnostics · just now</div>
+                  </div>
+                  <div style={{ width: 7, height: 7, borderRadius: 4, background: "#2563eb", flexShrink: 0 }} />
+                </div>
+                <div style={{ fontSize: 8, color: "#334155", fontWeight: 600, marginBottom: 2 }}>CBC + Blood Sugar Panel</div>
+                <div style={{ fontSize: 7, color: "#64748b" }}>Shared with Dr. Mehta automatically</div>
+              </div>
+
+              {/* Doctor reviewed card */}
+              <div style={{
+                margin: "0 9px 8px",
+                background: "linear-gradient(135deg, #eff6ff, #f0f9ff)",
+                borderRadius: 13, padding: "9px 10px",
+                border: "1px solid rgba(37,99,235,0.1)",
+                flexShrink: 0,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: 9, flexShrink: 0,
+                    background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+                    display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+                  }}>🩺</div>
+                  <div>
+                    <div style={{ fontSize: 8.5, fontWeight: 700, color: "#0f172a" }}>Dr. Mehta reviewed</div>
+                    <div style={{ fontSize: 7.5, color: "#16a34a", fontWeight: 600 }}>All values normal ✓</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA buttons */}
+              <div style={{ margin: "0 9px", display: "flex", flexDirection: "column", gap: 5, flexShrink: 0 }}>
+                <div style={{
+                  background: "linear-gradient(135deg, #2563eb, #0891b2)",
+                  borderRadius: 9, padding: "8px",
+                  textAlign: "center", fontSize: 8.5, fontWeight: 700, color: "white",
+                }}>View Full Report →</div>
+                <div style={{
+                  background: "white", border: "1px solid #e2e8f0",
+                  borderRadius: 9, padding: "7px",
+                  textAlign: "center", fontSize: 8, fontWeight: 600, color: "#475569",
+                }}>Book Follow-up</div>
+              </div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
-      {/* Status text — updated via DOM ref */}
+      {/* Status text */}
       <p
         ref={statusRef}
         className="text-xs font-semibold mt-1"
