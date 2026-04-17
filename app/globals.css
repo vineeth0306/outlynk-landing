@@ -98,6 +98,13 @@ html {
 .animate-ping-slow  { animation: ping-slow 2.5s ease-out infinite; }
 .animate-flow       { animation: flow 3s linear infinite; }
 
+@keyframes node-pop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  60%  { transform: scale(1.12); opacity: 1; }
+  80%  { transform: scale(0.96); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .shimmer-btn {
   background: linear-gradient(90deg, #2563eb 0%, #3b82f6 40%, #60a5fa 50%, #3b82f6 60%, #2563eb 100%);
   background-size: 200% auto;

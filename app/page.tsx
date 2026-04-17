@@ -2,6 +2,136 @@
 
 import { useState, useRef, useEffect } from "react";
 
+function HeroOrbit() {
+  const [step, setStep] = useState(0);
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    const run = () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+      setStep(0);
+      timers.current.push(setTimeout(() => setStep(1), 400));   // patient
+      timers.current.push(setTimeout(() => setStep(2), 1600));  // lab
+      timers.current.push(setTimeout(() => setStep(3), 2800));  // doctor
+      timers.current.push(setTimeout(() => setStep(4), 3700));  // all connected
+      timers.current.push(setTimeout(() => setStep(0), 5400));  // fade out
+      timers.current.push(setTimeout(run,              6100));  // loop
+    };
+    run();
+    return () => timers.current.forEach(clearTimeout);
+  }, []);
+
+  const statusMessages = [
+    "",
+    "Patient connecting to Outlynk...",
+    "Lab connecting to Outlynk...",
+    "Doctor connecting to Outlynk...",
+    "All connected. Healthcare, simplified.",
+  ];
+
+  const nodeAnim = (show: boolean): React.CSSProperties => ({
+    opacity: show ? 1 : 0,
+    animation: show ? "node-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
+    transition: show ? "none" : "opacity 0.4s ease",
+  });
+
+  return (
+    <div className="hidden md:flex flex-col items-center justify-center h-[420px] animate-fade-up-d2">
+      <div className="relative w-80 h-80 flex items-center justify-center">
+
+        {/* Dot grid bg */}
+        <div className="absolute inset-0 rounded-full"
+          style={{ backgroundImage: "radial-gradient(circle, #bfdbfe 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
+
+        {/* Orbit rings */}
+        <div className="absolute w-64 h-64 rounded-full border border-dashed border-blue-300/50 animate-spin-slow" />
+        <div className="absolute w-48 h-48 rounded-full border border-blue-200/40 animate-spin-rev" />
+
+        {/* Pulse rings */}
+        <div className="absolute w-16 h-16 rounded-full bg-blue-400/20 animate-ping-slow" />
+        <div className="absolute w-16 h-16 rounded-full bg-blue-400/10 animate-ping-slow" style={{ animationDelay: "1s" }} />
+
+        {/* SVG lines — draw FROM node TO center */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
+          {/* Patient (45,230) → center (160,160), length ≈ 135 */}
+          <line x1="45" y1="230" x2="160" y2="160"
+            stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
+            strokeDasharray="135"
+            strokeDashoffset={step >= 1 ? 0 : 135}
+            style={{ transition: step >= 1 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
+          {/* Lab (275,230) → center (160,160), length ≈ 135 */}
+          <line x1="275" y1="230" x2="160" y2="160"
+            stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
+            strokeDasharray="135"
+            strokeDashoffset={step >= 2 ? 0 : 135}
+            style={{ transition: step >= 2 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
+          {/* Doctor (160,30) → center (160,160), length = 130 */}
+          <line x1="160" y1="30" x2="160" y2="160"
+            stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
+            strokeDasharray="130"
+            strokeDashoffset={step >= 3 ? 0 : 130}
+            style={{ transition: step >= 3 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
+        </svg>
+
+        {/* Center hub */}
+        <div
+          className="relative z-20 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center"
+          style={{
+            boxShadow: step === 4
+              ? "0 0 0 5px rgba(96,165,250,0.35), 0 0 40px rgba(59,130,246,0.65), 0 20px 40px rgba(59,130,246,0.3)"
+              : "0 20px 40px rgba(96,165,250,0.35)",
+            transition: "box-shadow 0.6s ease",
+          }}
+        >
+          <div className="text-white font-black text-xs tracking-widest leading-tight text-center">
+            OUT<br />LYNK
+          </div>
+        </div>
+
+        {/* Patient — bottom left (first) */}
+        <div className="absolute bottom-4 left-0 z-10">
+          <div key={`p-${step >= 1}`} style={nodeAnim(step >= 1)}>
+            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
+              <span className="text-2xl">🙋</span>
+              <span className="text-xs font-bold text-slate-600">Patient</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Lab — bottom right (second) */}
+        <div className="absolute bottom-4 right-0 z-10">
+          <div key={`l-${step >= 2}`} style={nodeAnim(step >= 2)}>
+            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
+              <span className="text-2xl">🔬</span>
+              <span className="text-xs font-bold text-slate-600">Lab</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Doctor — top (third) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
+          <div key={`d-${step >= 3}`} style={nodeAnim(step >= 3)}>
+            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
+              <span className="text-2xl">🩺</span>
+              <span className="text-xs font-bold text-slate-600">Doctor</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Status label */}
+      <div className="h-7 mt-3 flex items-center justify-center overflow-hidden">
+        <p key={step} className="text-xs font-semibold animate-fade-up"
+          style={{ color: step === 4 ? "#2563eb" : "#64748b", opacity: step === 0 ? 0 : 1 }}>
+          {statusMessages[step]}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 type Role = "patient" | "doctor" | "lab";
 
 // Fires once when element scrolls into view
@@ -186,68 +316,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right — orbital connectivity hub */}
-            <div className="hidden md:flex items-center justify-center h-[420px] animate-fade-up-d2">
-              <div className="relative w-80 h-80 flex items-center justify-center">
-
-                {/* Dot grid bg */}
-                <div className="absolute inset-0 rounded-full"
-                  style={{ backgroundImage: 'radial-gradient(circle, #bfdbfe 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-
-                {/* Orbit rings */}
-                <div className="absolute w-64 h-64 rounded-full border border-dashed border-blue-300/50 animate-spin-slow" />
-                <div className="absolute w-48 h-48 rounded-full border border-blue-200/40 animate-spin-rev" />
-
-                {/* Pulse rings on center */}
-                <div className="absolute w-16 h-16 rounded-full bg-blue-400/20 animate-ping-slow" />
-                <div className="absolute w-16 h-16 rounded-full bg-blue-400/10 animate-ping-slow" style={{ animationDelay: '1s' }} />
-
-                {/* SVG connecting lines */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
-                  <line x1="160" y1="160" x2="160" y2="30"
-                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-                    className="animate-flow" />
-                  <line x1="160" y1="160" x2="275" y2="230"
-                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-                    className="animate-flow" style={{ animationDelay: '1s' }} />
-                  <line x1="160" y1="160" x2="45" y2="230"
-                    stroke="#93c5fd" strokeWidth="1.5" strokeDasharray="6 4"
-                    className="animate-flow" style={{ animationDelay: '2s' }} />
-                </svg>
-
-                {/* Center hub */}
-                <div className="relative z-20 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-300/60">
-                  <div className="text-center">
-                    <div className="text-white font-black text-xs tracking-widest leading-tight">OUT<br/>LYNK</div>
-                  </div>
-                </div>
-
-                {/* Node: Doctor */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 animate-float z-10">
-                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
-                    <span className="text-2xl">🩺</span>
-                    <span className="text-xs font-bold text-slate-600">Doctor</span>
-                  </div>
-                </div>
-
-                {/* Node: Lab */}
-                <div className="absolute bottom-4 right-0 animate-float-d1 z-10">
-                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
-                    <span className="text-2xl">🔬</span>
-                    <span className="text-xs font-bold text-slate-600">Lab</span>
-                  </div>
-                </div>
-
-                {/* Node: Patient */}
-                <div className="absolute bottom-4 left-0 animate-float-d2 z-10">
-                  <div className="bg-white rounded-2xl shadow-lg border border-blue-100 px-3 py-2 flex flex-col items-center gap-1 w-20">
-                    <span className="text-2xl">🙋</span>
-                    <span className="text-xs font-bold text-slate-600">Patient</span>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            {/* Right — animated orbital hub */}
+            <HeroOrbit />
           </div>
         </div>
       </section>
