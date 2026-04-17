@@ -28,25 +28,13 @@ function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
   };
 }
 
-/* ─── Canvas particle-network hero animation ──────────────────────── */
-const HOME_APPS = [
-  { icon: "💬", label: "WhatsApp", bg: "linear-gradient(135deg,#25d366,#128c7e)" },
-  { icon: "🛵", label: "Swiggy",   bg: "linear-gradient(135deg,#ff6b35,#e8560e)" },
-  { icon: "📸", label: "Insta",    bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
-  { icon: "📺", label: "YouTube",  bg: "linear-gradient(135deg,#ff0000,#cc0000)" },
-  { icon: "📍", label: "Maps",     bg: "linear-gradient(135deg,#4285f4,#0f9d58)" },
-  { icon: "📷", label: "Camera",   bg: "linear-gradient(135deg,#1a1a1a,#555)" },
-];
-
+/* ─── Cinematic report-journey animation ─────────────────────────── */
 function HeroAnimation() {
-  const canvasRef        = useRef<HTMLCanvasElement>(null);
-  const canvasWrapRef    = useRef<HTMLDivElement>(null);
-  const phoneRef         = useRef<HTMLDivElement>(null);
-  const phoneShellRef    = useRef<HTMLDivElement>(null);
-  const phoneBodyRef     = useRef<HTMLDivElement>(null);
-  const phoneOutlynkRef  = useRef<HTMLDivElement>(null);
-  const nodeRefs         = useRef<(HTMLDivElement | null)[]>([null, null, null]);
-  const statusRef        = useRef<HTMLParagraphElement | null>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const labRef     = useRef<HTMLDivElement>(null);
+  const doctorRef  = useRef<HTMLDivElement>(null);
+  const patientRef = useRef<HTMLDivElement>(null);
+  const statusRef  = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -54,351 +42,281 @@ function HeroAnimation() {
 
     const dpr = window.devicePixelRatio || 1;
     const W = 420, H = 420;
-    canvas.width  = W * dpr; canvas.height = H * dpr;
+    canvas.width = W*dpr; canvas.height = H*dpr;
     canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
     const ctx = canvas.getContext("2d")!;
     ctx.scale(dpr, dpr);
 
-    const cx = W / 2, cy = H / 2;
-    const OR = 148;
+    const LAB = { x: 90,  y: 160 };
+    const DOC = { x: 330, y: 160 };
+    const PAT = { x: 210, y: 330 };
+    const HUB = { x: 210, y: 230 };
 
-    const N = 52;
-    const px  = Array.from({ length: N }, () => Math.random() * W);
-    const py  = Array.from({ length: N }, () => Math.random() * H);
-    const pvx = Array.from({ length: N }, () => (Math.random() - 0.5) * 0.28);
-    const pvy = Array.from({ length: N }, () => (Math.random() - 0.5) * 0.28);
-    const pr  = Array.from({ length: N }, () => Math.random() * 1.4 + 0.5);
+    const DP = {
+      p0: { x: LAB.x+22, y: LAB.y-15 },
+      p1: { x: 155,       y: 40        },
+      p2: { x: 265,       y: 40        },
+      p3: { x: DOC.x-22,  y: DOC.y-15  },
+    };
+    const bz = (t: number) => ({
+      x: (1-t)**3*DP.p0.x + 3*(1-t)**2*t*DP.p1.x + 3*(1-t)*t**2*DP.p2.x + t**3*DP.p3.x,
+      y: (1-t)**3*DP.p0.y + 3*(1-t)**2*t*DP.p1.y + 3*(1-t)*t**2*DP.p2.y + t**3*DP.p3.y,
+    });
+    const bzAngle = (t: number) => {
+      const dt = 0.001;
+      const a = bz(Math.max(0,t-dt)), b = bz(Math.min(1,t+dt));
+      return Math.atan2(b.y-a.y, b.x-a.x);
+    };
+    const NP = {
+      p0: { x: DOC.x-10, y: DOC.y+20  },
+      p1: { x: DOC.x-60, y: DOC.y+120 },
+      p2: { x: PAT.x+60, y: PAT.y-80  },
+      p3: { x: PAT.x,    y: PAT.y-20  },
+    };
+    const nbz = (t: number) => ({
+      x: (1-t)**3*NP.p0.x + 3*(1-t)**2*t*NP.p1.x + 3*(1-t)*t**2*NP.p2.x + t**3*NP.p3.x,
+      y: (1-t)**3*NP.p0.y + 3*(1-t)**2*t*NP.p1.y + 3*(1-t)*t**2*NP.p2.y + t**3*NP.p3.y,
+    });
 
-    const packets: { t: number; hi: number }[] = [];
-    const HUB_OFFSETS = [240, 120, 0];
+    const BP = 35;
+    const bpx = Array.from({length:BP}, () => Math.random()*W);
+    const bpy = Array.from({length:BP}, () => Math.random()*H);
+    const bpvx = Array.from({length:BP}, () => (Math.random()-0.5)*0.18);
+    const bpvy = Array.from({length:BP}, () => (Math.random()-0.5)*0.18);
 
-    const STATUS_MSGS = [
-      "", "Patient connecting to Outlynk...", "Lab connecting to Outlynk...",
-      "Doctor connecting to Outlynk...", "All connected. Healthcare, simplified.",
-      "Outlynk — healthcare in your pocket.",
-    ];
+    const trail: { x: number; y: number; life: number; maxLife: number; r: number }[] = [];
+    const ripples: { x: number; y: number; r: number; maxR: number; alpha: number; color: string }[] = [];
 
-    // Canvas coords where hub flies into: dock area of phone
-    // Phone shell: 192×388, centered at (210,210) → top at 16, bottom at 404
-    // Outlynk icon at bottom:22 of shell → center y ≈ 404-22-24 = 358
-    const FLY_X = cx, FLY_Y = 358, FLY_R = 22;
-
-    let stepState = 0;
-    let step5Frame = 0;
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
-
-    const setStep = (s: number) => {
-      stepState = s;
-      timeouts.forEach(clearTimeout); timeouts.length = 0;
-
-      if (statusRef.current) {
-        statusRef.current.textContent = STATUS_MSGS[s];
-        statusRef.current.style.opacity = s === 0 ? "0" : "1";
-        statusRef.current.style.color = s === 5 ? "#0891b2" : s === 4 ? "#2563eb" : "#64748b";
-      }
-
-      if (s === 5) {
-        step5Frame = 0;
-        nodeRefs.current.forEach(el => { if (el) el.style.opacity = "0"; });
-
-        // Phone appears as tiny blue circle matching hub
-        const ph = phoneRef.current, shell = phoneShellRef.current;
-        const body = phoneBodyRef.current, outlynk = phoneOutlynkRef.current;
-        if (ph && shell && body && outlynk) {
-          body.style.transition = "none"; body.style.opacity = "0";
-          outlynk.style.transition = "none"; outlynk.style.opacity = "0";
-          outlynk.style.transform = "translateX(-50%) scale(0.2)";
-          ph.style.transition = "none"; ph.style.opacity = "1";
-          ph.style.transform = "translate(-50%,-50%) scale(0.17)";
-          shell.style.transition = "none"; shell.style.borderRadius = "50%";
-          shell.style.background = "linear-gradient(135deg,#60a5fa,#0891b2)";
-          shell.style.border = "none";
-          shell.style.boxShadow = "0 0 0 10px rgba(96,165,250,0.3),0 0 55px rgba(59,130,246,0.6)";
-        }
-
-        // 80ms: phone shell expands and morphs
-        timeouts.push(setTimeout(() => {
-          const ph2 = phoneRef.current, shell2 = phoneShellRef.current;
-          if (!ph2 || !shell2) return;
-          ph2.style.transition = "transform 0.82s cubic-bezier(0.34,1.56,0.64,1)";
-          ph2.style.transform = "translate(-50%,-50%) scale(1)";
-          shell2.style.transition =
-            "border-radius 0.7s ease 0.12s,background 0.55s ease 0.18s," +
-            "border 0.4s ease 0.22s,box-shadow 0.55s ease 0.18s";
-          shell2.style.borderRadius = "40px"; shell2.style.background = "#0f172a";
-          shell2.style.border = "6px solid #1e293b";
-          shell2.style.boxShadow =
-            "0 32px 80px rgba(15,23,42,0.45),0 0 0 1px rgba(255,255,255,0.06)," +
-            "inset 0 0 0 1px rgba(255,255,255,0.07)";
-        }, 80));
-
-        // ~950ms: hub has arrived → Outlynk icon springs into dock + canvas fades
-        timeouts.push(setTimeout(() => {
-          const outlynk2 = phoneOutlynkRef.current;
-          if (outlynk2) {
-            outlynk2.style.transition =
-              "transform 0.45s cubic-bezier(0.34,1.56,0.64,1),opacity 0.25s ease";
-            outlynk2.style.transform = "translateX(-50%) scale(1)";
-            outlynk2.style.opacity = "1";
-          }
-          const cw = canvasWrapRef.current;
-          if (cw) { cw.style.transition = "opacity 0.3s ease"; cw.style.opacity = "0"; }
-        }, 950));
-
-        // 1200ms: rest of apps fade in
-        timeouts.push(setTimeout(() => {
-          const body2 = phoneBodyRef.current;
-          if (body2) { body2.style.transition = "opacity 0.55s ease"; body2.style.opacity = "1"; }
-        }, 1200));
-
-      } else {
-        const cw = canvasWrapRef.current;
-        if (cw) { cw.style.transition = "none"; cw.style.opacity = "1"; }
-        const ph = phoneRef.current, body = phoneBodyRef.current;
-        const outlynk = phoneOutlynkRef.current;
-        if (ph) { ph.style.transition = "none"; ph.style.opacity = "0"; }
-        if (body) { body.style.transition = "none"; body.style.opacity = "0"; }
-        if (outlynk) {
-          outlynk.style.transition = "none"; outlynk.style.opacity = "0";
-          outlynk.style.transform = "translateX(-50%) scale(0.2)";
-        }
-        nodeRefs.current.forEach((el, i) => {
-          if (!el) return;
-          el.style.opacity = s > i ? "1" : "0";
-          el.style.transform = `translate(-50%,-50%) scale(${s > i ? 1 : 0.6})`;
-          el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
-        });
-      }
+    const PH = {
+      nodesIn: 15, labGlow: 35, docSpawn: 55, docArrive: 150,
+      stamp: 155, notif: 195, patLight: 240, lines: 258, hub: 310, hold: 420, reset: 460,
     };
 
-    let angle = 0, frame = 0;
-    let animId: number;
-    const STEPS_AT = [0, 22, 80, 138, 196, 290, 490];
+    let frame = 0, animId: number;
+    let labGlow = 0, stampA = 0, stampBounce = 0;
+    let notifT = -1, patGlow = 0, lineP = 0, hubA = 0;
+
+    const rrect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx.beginPath();
+      ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+      ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+      ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+      ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+      ctx.closePath();
+    };
+
+    const drawDoc = (x: number, y: number, angle: number, alpha: number) => {
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.rotate(angle);
+      const W2 = 26, H2 = 34;
+      ctx.shadowColor = "rgba(59,130,246,0.55)"; ctx.shadowBlur = 14;
+      ctx.fillStyle = "white"; rrect(-W2/2, -H2/2, W2, H2, 3); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#dbeafe";
+      ctx.beginPath(); ctx.moveTo(W2/2-8,-H2/2); ctx.lineTo(W2/2,-H2/2+8); ctx.lineTo(W2/2,-H2/2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#3b82f6"; rrect(-W2/2+5,-H2/2+5,W2-10,3,1); ctx.fill();
+      [0,1,2,3].forEach(li => {
+        ctx.fillStyle = li===3 ? "#cbd5e1" : "#94a3b8";
+        rrect(-W2/2+4,-H2/2+13+li*5.5,li===3?W2-14:W2-8,2,1); ctx.fill();
+      });
+      ctx.restore();
+    };
+
+    const drawStamp = (x: number, y: number, alpha: number) => {
+      if (alpha<=0) return;
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y+stampBounce);
+      ctx.shadowColor = "rgba(22,163,74,0.4)"; ctx.shadowBlur = 12;
+      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fillStyle="#dcfce7"; ctx.fill();
+      ctx.strokeStyle="#16a34a"; ctx.lineWidth=2; ctx.stroke(); ctx.shadowBlur=0;
+      ctx.strokeStyle="#16a34a"; ctx.lineWidth=2.8; ctx.lineCap="round"; ctx.lineJoin="round";
+      ctx.beginPath(); ctx.moveTo(-7,0); ctx.lineTo(-2,6); ctx.lineTo(8,-6); ctx.stroke();
+      ctx.restore();
+    };
+
+    const setNode = (ref: React.RefObject<HTMLDivElement | null>, active: boolean, color="rgba(96,165,250,0.8)", glow="rgba(59,130,246,0.35)") => {
+      const el = ref.current; if (!el) return;
+      el.style.borderColor = active ? color : "rgba(219,234,254,0.6)";
+      el.style.boxShadow = active ? `0 0 22px ${glow}` : "";
+      el.style.transform = active ? "translate(-50%,-50%) scale(1.08)" : "translate(-50%,-50%) scale(1)";
+    };
+    const setStatus = (msg: string, color="#64748b") => {
+      const el = statusRef.current; if (!el) return;
+      el.textContent = msg; el.style.opacity = msg?"1":"0"; el.style.color = color;
+    };
 
     const tick = () => {
       ctx.clearRect(0, 0, W, H);
-
-      // particles
-      for (let i = 0; i < N; i++) {
-        px[i] = (px[i] + pvx[i] + W) % W; py[i] = (py[i] + pvy[i] + H) % H;
-        ctx.beginPath(); ctx.arc(px[i], py[i], pr[i], 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(147,197,253,0.45)"; ctx.fill();
+      for (let i=0;i<BP;i++) {
+        bpx[i]=(bpx[i]+bpvx[i]+W)%W; bpy[i]=(bpy[i]+bpvy[i]+H)%H;
+        ctx.beginPath(); ctx.arc(bpx[i],bpy[i],1,0,Math.PI*2);
+        ctx.fillStyle="rgba(147,197,253,0.3)"; ctx.fill();
       }
-
-      // particle connections
-      for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
-        const dx = px[i]-px[j], dy = py[i]-py[j], d = Math.sqrt(dx*dx+dy*dy);
-        if (d < 75) {
-          ctx.beginPath(); ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]);
-          ctx.strokeStyle = `rgba(147,197,253,${0.13*(1-d/75)})`; ctx.lineWidth = 0.5; ctx.stroke();
+      if (frame===PH.nodesIn) {
+        [labRef,doctorRef,patientRef].forEach(ref=>{
+          if(!ref.current)return;
+          ref.current.style.transition="opacity 0.45s ease,transform 0.45s cubic-bezier(0.34,1.56,0.64,1)";
+          ref.current.style.opacity="1"; ref.current.style.transform="translate(-50%,-50%) scale(1)";
+        });
+      }
+      if (frame>=PH.labGlow && frame<PH.docArrive) {
+        labGlow=Math.min(1,labGlow+0.06);
+        const pulse=0.6+0.4*Math.sin(frame*0.18);
+        const g=ctx.createRadialGradient(LAB.x,LAB.y,0,LAB.x,LAB.y,55*pulse);
+        g.addColorStop(0,`rgba(59,130,246,${0.4*labGlow*pulse})`); g.addColorStop(1,"rgba(59,130,246,0)");
+        ctx.beginPath(); ctx.arc(LAB.x,LAB.y,55*pulse,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+        if(frame===PH.labGlow){setNode(labRef,true);setStatus("Lab uploading report...");}
+      }
+      if (frame>=PH.docSpawn && frame<PH.docArrive) {
+        const flyFrames=PH.docArrive-PH.docSpawn;
+        const raw=(frame-PH.docSpawn)/flyFrames;
+        const t=raw<0.5?2*raw*raw:-1+(4-2*raw)*raw;
+        const pos=bz(t); const ang=bzAngle(t)*0.35;
+        for(let g=3;g>=1;g--){const gt=Math.max(0,t-g*0.045);const gpos=bz(gt);const gang=bzAngle(gt)*0.35;drawDoc(gpos.x,gpos.y,gang,0.07*(4-g));}
+        if(frame%2===0)trail.push({x:pos.x,y:pos.y,life:0,maxLife:22,r:2.5+Math.random()*2});
+        drawDoc(pos.x,pos.y,ang,1);
+      }
+      for(let i=trail.length-1;i>=0;i--){
+        trail[i].life++;
+        if(trail[i].life>=trail[i].maxLife){trail.splice(i,1);continue;}
+        const a=1-trail[i].life/trail[i].maxLife;
+        ctx.beginPath(); ctx.arc(trail[i].x,trail[i].y,trail[i].r*a,0,Math.PI*2);
+        ctx.fillStyle=`rgba(96,165,250,${a*0.55})`; ctx.fill();
+      }
+      if(frame===PH.docArrive){
+        ripples.push({x:DOC.x,y:DOC.y,r:0,maxR:65,alpha:0.75,color:"59,130,246"});
+        ripples.push({x:DOC.x,y:DOC.y,r:0,maxR:38,alpha:0.55,color:"96,165,250"});
+        stampA=0;stampBounce=-38;setNode(doctorRef,true);setStatus("Doctor received the report.");labGlow=0;
+      }
+      if(frame>=PH.stamp && frame<PH.notif){
+        const sf=frame-PH.stamp;
+        stampA=Math.min(1,sf/6);
+        if(sf<8)stampBounce=-38+38*(sf/8);
+        else if(sf<12)stampBounce=-6*Math.sin((sf-8)/4*Math.PI);
+        else stampBounce=0;
+        const pulse=0.5+0.5*Math.sin(frame*0.22);
+        const g=ctx.createRadialGradient(DOC.x,DOC.y,0,DOC.x,DOC.y,50*pulse);
+        g.addColorStop(0,`rgba(22,163,74,${0.3*pulse})`);g.addColorStop(1,"rgba(22,163,74,0)");
+        ctx.beginPath();ctx.arc(DOC.x,DOC.y,50*pulse,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+        if(sf===8)setStatus("Doctor reviewed. ✓","#16a34a");
+      }
+      if(stampA>0)drawStamp(DOC.x,DOC.y-38,stampA);
+      for(let i=ripples.length-1;i>=0;i--){
+        ripples[i].r+=2.8;
+        const rp=ripples[i];
+        if(rp.r>=rp.maxR){ripples.splice(i,1);continue;}
+        const a=rp.alpha*(1-rp.r/rp.maxR);
+        ctx.beginPath();ctx.arc(rp.x,rp.y,rp.r,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(${rp.color},${a})`;ctx.lineWidth=1.8;ctx.stroke();
+      }
+      if(frame>=PH.notif && frame<PH.patLight){
+        if(frame===PH.notif)setStatus("Notifying patient...");
+        const nf=PH.patLight-PH.notif;
+        const raw=(frame-PH.notif)/nf;
+        const nt=raw<0.5?2*raw*raw:-1+(4-2*raw)*raw;
+        notifT=nt;
+        ctx.beginPath();ctx.moveTo(NP.p0.x,NP.p0.y);
+        ctx.bezierCurveTo(NP.p1.x,NP.p1.y,NP.p2.x,NP.p2.y,NP.p3.x,NP.p3.y);
+        ctx.strokeStyle="rgba(96,165,250,0.18)";ctx.lineWidth=1.5;ctx.setLineDash([4,6]);ctx.stroke();ctx.setLineDash([]);
+        const np=nbz(nt);
+        for(let r=3;r>=1;r--){ctx.beginPath();ctx.arc(np.x,np.y,r*5,0,Math.PI*2);ctx.fillStyle=`rgba(59,130,246,${0.35-r*0.09})`;ctx.fill();}
+        ctx.beginPath();ctx.arc(np.x,np.y,4,0,Math.PI*2);ctx.fillStyle="white";ctx.fill();
+        if(frame%6===0)ripples.push({x:np.x,y:np.y,r:0,maxR:16,alpha:0.4,color:"96,165,250"});
+      }
+      void notifT;
+      if(frame>=PH.patLight){
+        if(frame===PH.patLight){
+          setNode(patientRef,true,"rgba(52,211,153,0.8)","rgba(16,185,129,0.4)");
+          setStatus("Patient notified instantly. ✓","#10b981");
+          ripples.push({x:PAT.x,y:PAT.y,r:0,maxR:70,alpha:0.7,color:"16,185,129"});
+          ripples.push({x:PAT.x,y:PAT.y,r:0,maxR:45,alpha:0.5,color:"52,211,153"});
         }
+        patGlow=Math.min(1,patGlow+0.07);
+        const pulse=0.55+0.45*Math.sin(frame*0.14);
+        const g=ctx.createRadialGradient(PAT.x,PAT.y,0,PAT.x,PAT.y,52*pulse);
+        g.addColorStop(0,`rgba(16,185,129,${0.45*patGlow*pulse})`);g.addColorStop(1,"rgba(16,185,129,0)");
+        ctx.beginPath();ctx.arc(PAT.x,PAT.y,52*pulse,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
       }
-
-      // orbit rings
-      [[OR,[6,4],0.28],[OR*.68,[],0.16],[OR*.42,[3,4],0.1]].forEach(([r,dash,alpha]) => {
-        ctx.beginPath(); ctx.arc(cx,cy,r as number,0,Math.PI*2);
-        ctx.setLineDash(dash as number[]); ctx.strokeStyle = `rgba(147,197,253,${alpha})`;
-        ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
-      });
-
-      // node positions
-      angle += 0.22;
-      const hx: number[] = [], hy: number[] = [];
-      HUB_OFFSETS.forEach((off, i) => {
-        const a = ((angle+off)*Math.PI)/180;
-        hx[i] = cx+Math.cos(a)*OR; hy[i] = cy+Math.sin(a)*OR;
-        const el = nodeRefs.current[i];
-        if (el) { el.style.left = `${hx[i]}px`; el.style.top = `${hy[i]}px`; }
-      });
-
-      // connection lines
-      for (let i = 0; i < 3; i++) if (stepState > i && stepState < 5) {
-        ctx.beginPath(); ctx.moveTo(hx[i],hy[i]); ctx.lineTo(cx,cy);
-        const g = ctx.createLinearGradient(hx[i],hy[i],cx,cy);
-        g.addColorStop(0,"rgba(96,165,250,0.55)"); g.addColorStop(1,"rgba(6,182,212,0.75)");
-        ctx.strokeStyle = g; ctx.lineWidth = 1.8; ctx.stroke();
+      if(frame>=PH.lines){
+        lineP=Math.min(1,(frame-PH.lines)/45);
+        [[LAB,HUB],[DOC,HUB],[PAT,HUB]].forEach(([a,b])=>{
+          const ex=a.x+(b.x-a.x)*lineP,ey=a.y+(b.y-a.y)*lineP;
+          const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);
+          g.addColorStop(0,"rgba(96,165,250,0.55)");g.addColorStop(1,"rgba(6,182,212,0.8)");
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(ex,ey);ctx.strokeStyle=g;ctx.lineWidth=1.6;ctx.stroke();
+          if(lineP>0.3){const ft=((frame*0.028)%1);const fx=a.x+(b.x-a.x)*ft,fy=a.y+(b.y-a.y)*ft;ctx.beginPath();ctx.arc(fx,fy,2.5,0,Math.PI*2);ctx.fillStyle="rgba(147,197,253,0.85)";ctx.fill();}
+        });
       }
-
-      // data packets
-      for (let i = packets.length-1; i >= 0; i--) {
-        packets[i].t += 0.024;
-        if (packets[i].t >= 1) { packets.splice(i,1); continue; }
-        const hi = packets[i].hi, t = packets[i].t;
-        const ppx = hx[hi]+(cx-hx[hi])*t, ppy = hy[hi]+(cy-hy[hi])*t;
-        const g2 = ctx.createRadialGradient(ppx,ppy,0,ppx,ppy,8);
-        g2.addColorStop(0,"rgba(59,130,246,0.9)"); g2.addColorStop(1,"rgba(59,130,246,0)");
-        ctx.beginPath(); ctx.arc(ppx,ppy,8,0,Math.PI*2); ctx.fillStyle = g2; ctx.fill();
-        ctx.beginPath(); ctx.arc(ppx,ppy,2.8,0,Math.PI*2); ctx.fillStyle = "white"; ctx.fill();
+      if(frame>=PH.hub){
+        hubA=Math.min(1,(frame-PH.hub)/28);
+        if(frame===PH.hub)setStatus("One platform. Zero trips.","#2563eb");
+        const pulse=0.72+0.28*Math.sin(frame*0.07);
+        const glowR=58*pulse;
+        const cg=ctx.createRadialGradient(HUB.x,HUB.y,0,HUB.x,HUB.y,glowR);
+        cg.addColorStop(0,`rgba(59,130,246,${0.5*pulse*hubA})`);cg.addColorStop(1,"rgba(59,130,246,0)");
+        ctx.beginPath();ctx.arc(HUB.x,HUB.y,glowR,0,Math.PI*2);ctx.fillStyle=cg;ctx.fill();
+        ctx.globalAlpha=hubA;
+        const hg=ctx.createLinearGradient(HUB.x-34,HUB.y-34,HUB.x+34,HUB.y+34);
+        hg.addColorStop(0,"#60a5fa");hg.addColorStop(1,"#0891b2");
+        ctx.beginPath();ctx.arc(HUB.x,HUB.y,34,0,Math.PI*2);ctx.fillStyle=hg;
+        ctx.shadowColor="rgba(59,130,246,0.7)";ctx.shadowBlur=26;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle="rgba(255,255,255,0.96)";ctx.font="bold 8px system-ui,sans-serif";
+        ctx.textAlign="center";ctx.textBaseline="middle";
+        ctx.fillText("OUT",HUB.x,HUB.y-6.5);ctx.fillText("LYNK",HUB.x,HUB.y+6.5);
+        ctx.globalAlpha=1;
+        ctx.beginPath();ctx.arc(HUB.x,HUB.y,40+8*(1-pulse),0,Math.PI*2);
+        ctx.strokeStyle=`rgba(96,165,250,${0.4*pulse*hubA})`;ctx.lineWidth=2;ctx.stroke();
       }
-      if (frame%72===36 && stepState>0 && stepState<5)
-        packets.push({ t:0, hi:Math.floor(Math.random()*Math.min(stepState,3)) });
-
-      const pulse = 0.75 + 0.25*Math.sin(frame*0.055);
-
-      if (stepState === 5) {
-        // ── Hub flies from center down into phone dock ──────────────
-        step5Frame++;
-        const t = Math.min(step5Frame / 57, 1);
-        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease-in-out
-
-        const hubX = cx + (FLY_X - cx) * ease;
-        const hubY = cy + (FLY_Y - cy) * ease;
-        const hubR = 32 + (FLY_R - 32) * ease;
-        const alpha = 1 - ease * 0.35;
-
-        // glow behind flying hub
-        const glow = ctx.createRadialGradient(hubX,hubY,0,hubX,hubY,hubR*2);
-        glow.addColorStop(0,`rgba(59,130,246,${0.38*alpha})`);
-        glow.addColorStop(1,"rgba(59,130,246,0)");
-        ctx.beginPath(); ctx.arc(hubX,hubY,hubR*2,0,Math.PI*2);
-        ctx.fillStyle = glow; ctx.fill();
-
-        // hub circle
-        const hg = ctx.createLinearGradient(hubX-hubR,hubY-hubR,hubX+hubR,hubY+hubR);
-        hg.addColorStop(0,"#60a5fa"); hg.addColorStop(1,"#0891b2");
-        ctx.beginPath(); ctx.arc(hubX,hubY,hubR,0,Math.PI*2);
-        ctx.fillStyle = hg; ctx.shadowColor = `rgba(59,130,246,${0.65*alpha})`;
-        ctx.shadowBlur = 18; ctx.globalAlpha = alpha; ctx.fill();
-        ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-
-        if (hubR > 10) {
-          const sc = hubR / 32;
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = "rgba(255,255,255,0.96)";
-          ctx.font = `bold ${7.5*sc}px system-ui,sans-serif`;
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText("OUT",  hubX, hubY - 5.5*sc);
-          ctx.fillText("LYNK", hubX, hubY + 5.5*sc);
-          ctx.globalAlpha = 1;
-        }
-
-      } else {
-        // ── Normal center glow + hub ────────────────────────────────
-        const glowR = stepState === 4 ? 58*pulse : 44;
-        const cg = ctx.createRadialGradient(cx,cy,0,cx,cy,glowR);
-        cg.addColorStop(0,`rgba(59,130,246,${stepState===4 ? 0.5*pulse : 0.22})`);
-        cg.addColorStop(1,"rgba(59,130,246,0)");
-        ctx.beginPath(); ctx.arc(cx,cy,glowR,0,Math.PI*2); ctx.fillStyle = cg; ctx.fill();
-
-        if (stepState === 4) {
-          ctx.beginPath(); ctx.arc(cx,cy,38+10*(1-pulse),0,Math.PI*2);
-          ctx.strokeStyle = `rgba(96,165,250,${0.4*pulse})`; ctx.lineWidth = 2; ctx.stroke();
-        }
-
-        const hubG = ctx.createLinearGradient(cx-30,cy-30,cx+30,cy+30);
-        hubG.addColorStop(0,"#60a5fa"); hubG.addColorStop(1,"#0891b2");
-        ctx.beginPath(); ctx.arc(cx,cy,32,0,Math.PI*2); ctx.fillStyle = hubG;
-        ctx.shadowColor = "rgba(59,130,246,0.65)"; ctx.shadowBlur = 20; ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "rgba(255,255,255,0.96)";
-        ctx.font = "bold 7.5px system-ui,sans-serif";
-        ctx.textAlign = "center"; ctx.textBaseline = "middle";
-        ctx.fillText("OUT",cx,cy-5.5); ctx.fillText("LYNK",cx,cy+5.5);
-      }
-
       frame++;
-      if      (frame === STEPS_AT[1]) setStep(1);
-      else if (frame === STEPS_AT[2]) setStep(2);
-      else if (frame === STEPS_AT[3]) setStep(3);
-      else if (frame === STEPS_AT[4]) setStep(4);
-      else if (frame === STEPS_AT[5]) setStep(5);
-      else if (frame >= STEPS_AT[6]) { setStep(0); frame=0; step5Frame=0; packets.length=0; }
-
-      animId = requestAnimationFrame(tick);
+      if(frame>=PH.reset){
+        frame=0;trail.length=0;ripples.length=0;
+        notifT=-1;stampA=0;labGlow=0;patGlow=0;lineP=0;hubA=0;stampBounce=0;
+        [labRef,doctorRef,patientRef].forEach(ref=>{
+          if(!ref.current)return;
+          ref.current.style.transition="none";ref.current.style.opacity="0";
+          ref.current.style.transform="translate(-50%,-50%) scale(0.6)";
+          ref.current.style.borderColor="rgba(219,234,254,0.6)";ref.current.style.boxShadow="";
+        });
+        setStatus("");
+      }
+      animId=requestAnimationFrame(tick);
     };
-
-    animId = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(animId); timeouts.forEach(clearTimeout); };
+    animId=requestAnimationFrame(tick);
+    return ()=>cancelAnimationFrame(animId);
   }, []);
 
   return (
     <div className="hidden md:flex flex-col items-center justify-center h-[460px] animate-fade-up-d2">
-      <div className="relative" style={{ width: 420, height: 420 }}>
-
-        {/* Canvas + node cards */}
-        <div ref={canvasWrapRef} className="absolute inset-0">
-          <canvas ref={canvasRef} className="absolute inset-0" />
-          {[
-            { icon: "🙋", label: "Patient" },
-            { icon: "🔬", label: "Lab" },
-            { icon: "🩺", label: "Doctor" },
-          ].map((card, i) => (
-            <div key={card.label} ref={el => { nodeRefs.current[i] = el; }}
-              className="absolute pointer-events-none"
-              style={{ left:210, top:210, transform:"translate(-50%,-50%) scale(0.6)", opacity:0,
-                transition:"opacity 0.45s ease,transform 0.45s cubic-bezier(0.34,1.56,0.64,1),border-color 0.3s ease" }}>
-              <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-0.5 border shadow-lg shadow-blue-100/70"
-                style={{ padding:"7px 10px", width:64, borderColor:"rgba(219,234,254,0.6)" }}>
-                <span style={{ fontSize:22 }}>{card.icon}</span>
-                <span className="text-[9px] font-bold text-slate-600">{card.label}</span>
-              </div>
-            </div>
-          ))}
+      <div className="relative" style={{width:420,height:420}}>
+        <canvas ref={canvasRef} className="absolute inset-0" />
+        <div ref={labRef} className="absolute pointer-events-none"
+          style={{left:90,top:160,opacity:0,transform:"translate(-50%,-50%) scale(0.6)",
+            transition:"border-color 0.3s ease,box-shadow 0.3s ease,transform 0.3s ease"}}>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-1 border shadow-lg shadow-blue-100/60"
+            style={{padding:"9px 13px",borderColor:"rgba(219,234,254,0.6)",minWidth:64}}>
+            <span style={{fontSize:24}}>🔬</span>
+            <span className="text-[9px] font-bold text-slate-600">Lab</span>
+          </div>
         </div>
-
-        {/* Phone */}
-        <div ref={phoneRef} className="absolute pointer-events-none"
-          style={{ top:"50%", left:"50%", transform:"translate(-50%,-50%) scale(0.17)", opacity:0 }}>
-          <div ref={phoneShellRef} style={{
-            width:192, height:388, background:"#0f172a", borderRadius:40,
-            border:"6px solid #1e293b", position:"relative", overflow:"hidden",
-            display:"flex", flexDirection:"column",
-            boxShadow:"0 32px 80px rgba(15,23,42,0.45),0 0 0 1px rgba(255,255,255,0.06),inset 0 0 0 1px rgba(255,255,255,0.07)",
-          }}>
-            {/* Dynamic island */}
-            <div style={{ width:76, height:22, background:"#000", borderRadius:12, margin:"9px auto 0", flexShrink:0 }} />
-
-            {/* Home screen — other apps, fades in after Outlynk lands */}
-            <div ref={phoneBodyRef} style={{
-              flex:1, background:"linear-gradient(160deg,#1e3a8a 0%,#1d4ed8 45%,#0891b2 100%)",
-              margin:"6px 0 0", borderRadius:"0 0 34px 34px", overflow:"hidden",
-              display:"flex", flexDirection:"column", alignItems:"center",
-              padding:"8px 0 68px", opacity:0,
-            }}>
-              <div style={{ color:"rgba(255,255,255,0.9)", fontSize:22, fontWeight:700, marginBottom:2 }}>9:41</div>
-              <div style={{ color:"rgba(255,255,255,0.5)", fontSize:7.5, marginBottom:16 }}>Thursday, 17 April</div>
-              {/* 3×2 grid of everyday apps */}
-              {[[0,1,2],[3,4,5]].map((row, ri) => (
-                <div key={ri} style={{ display:"flex", gap:13, marginBottom:13 }}>
-                  {row.map(idx => (
-                    <div key={idx} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                      <div style={{
-                        width:36, height:36, borderRadius:9, background:HOME_APPS[idx].bg,
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontSize:16, boxShadow:"0 3px 10px rgba(0,0,0,0.28)",
-                      }}>{HOME_APPS[idx].icon}</div>
-                      <span style={{ color:"rgba(255,255,255,0.8)", fontSize:6.5, fontWeight:600 }}>{HOME_APPS[idx].label}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Outlynk dock icon — springs in when hub flies in, z-index above screen */}
-            <div ref={phoneOutlynkRef} style={{
-              position:"absolute", bottom:22, left:"50%",
-              transform:"translateX(-50%) scale(0.2)", opacity:0, zIndex:10,
-              display:"flex", flexDirection:"column", alignItems:"center", gap:4,
-            }}>
-              <div style={{
-                width:44, height:44, borderRadius:12, background:"white",
-                display:"flex", alignItems:"center", justifyContent:"center",
-                boxShadow:"0 0 0 3px rgba(255,255,255,0.4),0 6px 22px rgba(0,0,0,0.4)",
-              }}>
-                <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-                  <path d="M9 21 C4 17 4 11 9 7"  stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
-                  <path d="M13 24 C5 19 5 9 13 4" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
-                  <path d="M17 26 C6 20 6 8 17 2" stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
-                </svg>
-              </div>
-              <span style={{ color:"white", fontSize:7.5, fontWeight:800, letterSpacing:"0.04em" }}>outlynk</span>
-            </div>
+        <div ref={doctorRef} className="absolute pointer-events-none"
+          style={{left:330,top:160,opacity:0,transform:"translate(-50%,-50%) scale(0.6)",
+            transition:"border-color 0.3s ease,box-shadow 0.3s ease,transform 0.3s ease"}}>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-1 border shadow-lg shadow-blue-100/60"
+            style={{padding:"9px 13px",borderColor:"rgba(219,234,254,0.6)",minWidth:64}}>
+            <span style={{fontSize:24}}>🩺</span>
+            <span className="text-[9px] font-bold text-slate-600">Doctor</span>
+          </div>
+        </div>
+        <div ref={patientRef} className="absolute pointer-events-none"
+          style={{left:210,top:330,opacity:0,transform:"translate(-50%,-50%) scale(0.6)",
+            transition:"border-color 0.3s ease,box-shadow 0.3s ease,transform 0.3s ease"}}>
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-1 border shadow-lg shadow-blue-100/60"
+            style={{padding:"9px 13px",borderColor:"rgba(219,234,254,0.6)",minWidth:64}}>
+            <span style={{fontSize:24}}>🙋</span>
+            <span className="text-[9px] font-bold text-slate-600">Patient</span>
           </div>
         </div>
       </div>
-
       <p ref={statusRef} className="text-xs font-semibold mt-1"
-        style={{ opacity:0, transition:"opacity 0.4s ease,color 0.4s ease", minHeight:20 }} />
+        style={{opacity:0,transition:"opacity 0.4s ease,color 0.4s ease",minHeight:20,textAlign:"center"}} />
     </div>
   );
 }
