@@ -28,94 +28,245 @@ function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
   };
 }
 
-/* ─── Hero orbital animation ──────────────────────────────────────── */
-function HeroOrbit() {
-  const [step, setStep] = useState(0);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+/* ─── Canvas particle-network hero animation ──────────────────────── */
+function HeroAnimation() {
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
+  const nodeRefs   = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const statusRef  = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
-    const run = () => {
-      timers.current.forEach(clearTimeout);
-      timers.current = [];
-      setStep(0);
-      timers.current.push(setTimeout(() => setStep(1), 400));
-      timers.current.push(setTimeout(() => setStep(2), 1600));
-      timers.current.push(setTimeout(() => setStep(3), 2800));
-      timers.current.push(setTimeout(() => setStep(4), 3700));
-      timers.current.push(setTimeout(() => setStep(0), 5400));
-      timers.current.push(setTimeout(run, 6100));
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // HiDPI canvas
+    const dpr = window.devicePixelRatio || 1;
+    const W = 420, H = 420;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = `${W}px`;
+    canvas.style.height = `${H}px`;
+    const ctx = canvas.getContext("2d")!;
+    ctx.scale(dpr, dpr);
+
+    const cx = W / 2, cy = H / 2;
+    const OR = 148; // outer orbit radius
+
+    // ── Particles ──────────────────────────────────────────────────
+    const N = 52;
+    const px  = Array.from({ length: N }, () => Math.random() * W);
+    const py  = Array.from({ length: N }, () => Math.random() * H);
+    const pvx = Array.from({ length: N }, () => (Math.random() - 0.5) * 0.28);
+    const pvy = Array.from({ length: N }, () => (Math.random() - 0.5) * 0.28);
+    const pr  = Array.from({ length: N }, () => Math.random() * 1.4 + 0.5);
+
+    // ── Data packets ───────────────────────────────────────────────
+    const packets: { t: number; hi: number }[] = [];
+
+    // ── Hub config (Patient→0, Lab→1, Doctor→2) ────────────────────
+    const HUB_OFFSETS  = [240, 120, 0]; // degrees offset on orbit
+    // ── Step sequencing (direct DOM, no React re-renders) ──────────
+    const STATUS_MSGS = [
+      "", "Patient connecting to Outlynk...", "Lab connecting to Outlynk...",
+      "Doctor connecting to Outlynk...", "All connected. Healthcare, simplified.",
+    ];
+    let stepState = 0;
+    const setStep = (s: number) => {
+      stepState = s;
+      if (statusRef.current) {
+        statusRef.current.textContent = STATUS_MSGS[s];
+        statusRef.current.style.opacity = s === 0 ? "0" : "1";
+        statusRef.current.style.color   = s === 4 ? "#2563eb" : "#64748b";
+      }
+      nodeRefs.current.forEach((el, i) => {
+        if (!el) return;
+        el.style.opacity = s > i ? "1" : "0";
+        el.style.transform = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
+        el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
+      });
     };
-    run();
-    return () => timers.current.forEach(clearTimeout);
+
+    let angle = 0, frame = 0;
+    let animId: number;
+
+    const STEPS_AT = [0, 22, 80, 138, 196, 350]; // frame numbers
+
+    const tick = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // ── Move & draw particles ─────────────────────────────────────
+      for (let i = 0; i < N; i++) {
+        px[i] = (px[i] + pvx[i] + W) % W;
+        py[i] = (py[i] + pvy[i] + H) % H;
+        ctx.beginPath();
+        ctx.arc(px[i], py[i], pr[i], 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(147,197,253,0.45)";
+        ctx.fill();
+      }
+
+      // ── Connect nearby particles ──────────────────────────────────
+      for (let i = 0; i < N; i++) {
+        for (let j = i + 1; j < N; j++) {
+          const dx = px[i] - px[j], dy = py[i] - py[j];
+          const d  = Math.sqrt(dx * dx + dy * dy);
+          if (d < 75) {
+            ctx.beginPath();
+            ctx.moveTo(px[i], py[i]);
+            ctx.lineTo(px[j], py[j]);
+            ctx.strokeStyle = `rgba(147,197,253,${0.13 * (1 - d / 75)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // ── Orbit rings ───────────────────────────────────────────────
+      [[OR, [6,4], 0.28], [OR*0.68, [], 0.16], [OR*0.42, [3,4], 0.1]].forEach(([r, dash, alpha]) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r as number, 0, Math.PI * 2);
+        ctx.setLineDash(dash as number[]);
+        ctx.strokeStyle = `rgba(147,197,253,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      // ── Hub positions (orbiting) ──────────────────────────────────
+      angle += 0.22;
+      const hx: number[] = [], hy: number[] = [];
+      HUB_OFFSETS.forEach((off, i) => {
+        const a = ((angle + off) * Math.PI) / 180;
+        hx[i] = cx + Math.cos(a) * OR;
+        hy[i] = cy + Math.sin(a) * OR;
+        // update DOM card position directly
+        const el = nodeRefs.current[i];
+        if (el) { el.style.left = `${hx[i]}px`; el.style.top = `${hy[i]}px`; }
+      });
+
+      // ── Connection lines ──────────────────────────────────────────
+      for (let i = 0; i < 3; i++) {
+        if (stepState > i) {
+          ctx.beginPath();
+          ctx.moveTo(hx[i], hy[i]);
+          ctx.lineTo(cx, cy);
+          const g = ctx.createLinearGradient(hx[i], hy[i], cx, cy);
+          g.addColorStop(0, "rgba(96,165,250,0.55)");
+          g.addColorStop(1, "rgba(6,182,212,0.75)");
+          ctx.strokeStyle = g;
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        }
+      }
+
+      // ── Data packets ──────────────────────────────────────────────
+      for (let i = packets.length - 1; i >= 0; i--) {
+        packets[i].t += 0.024;
+        if (packets[i].t >= 1) { packets.splice(i, 1); continue; }
+        const hi = packets[i].hi;
+        const t  = packets[i].t;
+        const ppx = hx[hi] + (cx - hx[hi]) * t;
+        const ppy = hy[hi] + (cy - hy[hi]) * t;
+        const g2 = ctx.createRadialGradient(ppx, ppy, 0, ppx, ppy, 8);
+        g2.addColorStop(0, "rgba(59,130,246,0.9)");
+        g2.addColorStop(1, "rgba(59,130,246,0)");
+        ctx.beginPath(); ctx.arc(ppx, ppy, 8, 0, Math.PI * 2);
+        ctx.fillStyle = g2; ctx.fill();
+        ctx.beginPath(); ctx.arc(ppx, ppy, 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = "white"; ctx.fill();
+      }
+      if (frame % 72 === 36 && stepState > 0) {
+        packets.push({ t: 0, hi: Math.floor(Math.random() * Math.min(stepState, 3)) });
+      }
+
+      // ── Center glow ───────────────────────────────────────────────
+      const pulse = 0.75 + 0.25 * Math.sin(frame * 0.055);
+      const glowR = stepState === 4 ? 58 * pulse : 44;
+      const cg0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+      cg0.addColorStop(0, `rgba(59,130,246,${stepState === 4 ? 0.5 * pulse : 0.22})`);
+      cg0.addColorStop(1, "rgba(59,130,246,0)");
+      ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+      ctx.fillStyle = cg0; ctx.fill();
+
+      // extra ring when all connected
+      if (stepState === 4) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 38 + 10 * (1 - pulse), 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(96,165,250,${0.4 * pulse})`;
+        ctx.lineWidth = 2; ctx.stroke();
+      }
+
+      // ── Center hub ────────────────────────────────────────────────
+      const hubG = ctx.createLinearGradient(cx - 30, cy - 30, cx + 30, cy + 30);
+      hubG.addColorStop(0, "#60a5fa");
+      hubG.addColorStop(1, "#0891b2");
+      ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+      ctx.fillStyle = hubG;
+      ctx.shadowColor = "rgba(59,130,246,0.65)";
+      ctx.shadowBlur = 20;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      // text
+      ctx.fillStyle = "rgba(255,255,255,0.96)";
+      ctx.font = "bold 7.5px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("OUT",   cx, cy - 5.5);
+      ctx.fillText("LYNK",  cx, cy + 5.5);
+
+      // ── Step sequencing ───────────────────────────────────────────
+      frame++;
+      if (frame === STEPS_AT[1]) setStep(1);
+      else if (frame === STEPS_AT[2]) setStep(2);
+      else if (frame === STEPS_AT[3]) setStep(3);
+      else if (frame === STEPS_AT[4]) setStep(4);
+      else if (frame >= STEPS_AT[5]) {
+        setStep(0); frame = 0; packets.length = 0;
+      }
+
+      animId = requestAnimationFrame(tick);
+    };
+
+    animId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animId);
   }, []);
 
-  const statusMessages = [
-    "", "Patient connecting to Outlynk...", "Lab connecting to Outlynk...",
-    "Doctor connecting to Outlynk...", "All connected. Healthcare, simplified.",
-  ];
-  const nodeAnim = (show: boolean): React.CSSProperties => ({
-    opacity: show ? 1 : 0,
-    animation: show ? "node-pop 0.5s cubic-bezier(0.34,1.56,0.64,1) both" : "none",
-    transition: show ? "none" : "opacity 0.4s ease",
-  });
-
   return (
-    <div className="hidden md:flex flex-col items-center justify-center h-[440px] animate-fade-up-d2">
-      <div className="relative w-80 h-80 flex items-center justify-center">
-        <div className="absolute inset-0 rounded-full"
-          style={{ backgroundImage: "radial-gradient(circle, #bfdbfe 1px, transparent 1px)", backgroundSize: "22px 22px" }} />
-        <div className="absolute w-64 h-64 rounded-full border border-dashed border-blue-300/50 animate-spin-slow" />
-        <div className="absolute w-48 h-48 rounded-full border border-blue-200/40 animate-spin-rev" />
-        <div className="absolute w-16 h-16 rounded-full bg-blue-400/20 animate-ping-slow" />
-        <div className="absolute w-16 h-16 rounded-full bg-blue-400/10 animate-ping-slow" style={{ animationDelay: "1s" }} />
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 320 320">
-          <line x1="45" y1="230" x2="160" y2="160" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
-            strokeDasharray="135" strokeDashoffset={step >= 1 ? 0 : 135}
-            style={{ transition: step >= 1 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
-          <line x1="275" y1="230" x2="160" y2="160" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
-            strokeDasharray="135" strokeDashoffset={step >= 2 ? 0 : 135}
-            style={{ transition: step >= 2 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
-          <line x1="160" y1="30" x2="160" y2="160" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
-            strokeDasharray="130" strokeDashoffset={step >= 3 ? 0 : 130}
-            style={{ transition: step >= 3 ? "stroke-dashoffset 0.8s ease 0.2s" : "none" }} />
-        </svg>
-        <div className="relative z-20 w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center"
-          style={{
-            boxShadow: step === 4
-              ? "0 0 0 5px rgba(96,165,250,0.35), 0 0 40px rgba(59,130,246,0.65), 0 20px 40px rgba(59,130,246,0.3)"
-              : "0 20px 40px rgba(96,165,250,0.35)",
-            transition: "box-shadow 0.6s ease",
-          }}>
-          <div className="text-white font-black text-xs tracking-widest leading-tight text-center">OUT<br />LYNK</div>
-        </div>
-        <div className="absolute bottom-4 left-0 z-10">
-          <div key={`p-${step >= 1}`} style={nodeAnim(step >= 1)}>
-            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
-              <span className="text-2xl">🙋</span><span className="text-xs font-bold text-slate-600">Patient</span>
+    <div className="hidden md:flex flex-col items-center justify-center h-[460px] animate-fade-up-d2">
+      <div className="relative" style={{ width: 420, height: 420 }}>
+        {/* Canvas layer — particles, rings, lines, packets, hub */}
+        <canvas ref={canvasRef} className="absolute inset-0" />
+
+        {/* HTML overlay — emoji node cards (emojis need DOM rendering) */}
+        {[
+          { icon: "🙋", label: "Patient" },
+          { icon: "🔬", label: "Lab" },
+          { icon: "🩺", label: "Doctor" },
+        ].map((card, i) => (
+          <div
+            key={card.label}
+            ref={el => { nodeRefs.current[i] = el; }}
+            className="absolute pointer-events-none"
+            style={{
+              left: 210, top: 210,
+              transform: "translate(-50%, -50%) scale(0.6)",
+              opacity: 0,
+              transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s ease",
+            }}
+          >
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-0.5 border shadow-lg shadow-blue-100/70"
+              style={{ padding: "7px 10px", width: 64, borderColor: "rgba(219,234,254,0.6)" }}>
+              <span style={{ fontSize: 22 }}>{card.icon}</span>
+              <span className="text-[9px] font-bold text-slate-600">{card.label}</span>
             </div>
           </div>
-        </div>
-        <div className="absolute bottom-4 right-0 z-10">
-          <div key={`l-${step >= 2}`} style={nodeAnim(step >= 2)}>
-            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
-              <span className="text-2xl">🔬</span><span className="text-xs font-bold text-slate-600">Lab</span>
-            </div>
-          </div>
-        </div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10">
-          <div key={`d-${step >= 3}`} style={nodeAnim(step >= 3)}>
-            <div className="bg-white rounded-2xl px-3 py-2 flex flex-col items-center gap-1 w-20 border border-blue-200 shadow-lg shadow-blue-100/60">
-              <span className="text-2xl">🩺</span><span className="text-xs font-bold text-slate-600">Doctor</span>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
-      <div className="h-7 mt-3 flex items-center justify-center overflow-hidden">
-        <p key={step} className="text-xs font-semibold animate-fade-up"
-          style={{ color: step === 4 ? "#2563eb" : "#64748b", opacity: step === 0 ? 0 : 1 }}>
-          {statusMessages[step]}
-        </p>
-      </div>
+
+      {/* Status text — updated via DOM ref */}
+      <p
+        ref={statusRef}
+        className="text-xs font-semibold mt-1"
+        style={{ opacity: 0, transition: "opacity 0.4s ease, color 0.4s ease", minHeight: 20 }}
+      />
     </div>
   );
 }
@@ -240,7 +391,7 @@ export default function Home() {
               </h1>
 
               <p className="text-slate-500 text-lg leading-relaxed mb-8 max-w-md animate-fade-up-d2">
-                One platform where diagnostic reports flow directly from labs to doctors, consultations happen remotely, and your medical history lives in one place.
+                One platform to centralize the fragmented healthcare in India.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-fade-up-d3">
@@ -267,7 +418,7 @@ export default function Home() {
               </div>
             </div>
 
-            <HeroOrbit />
+            <HeroAnimation />
           </div>
         </div>
 
