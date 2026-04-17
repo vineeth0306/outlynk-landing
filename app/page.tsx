@@ -29,14 +29,24 @@ function reveal(visible: boolean, delayMs = 0): React.CSSProperties {
 }
 
 /* ─── Canvas particle-network hero animation ──────────────────────── */
+const HOME_APPS = [
+  { icon: "💬", label: "WhatsApp", bg: "linear-gradient(135deg,#25d366,#128c7e)" },
+  { icon: "🛵", label: "Swiggy",   bg: "linear-gradient(135deg,#ff6b35,#e8560e)" },
+  { icon: "📸", label: "Insta",    bg: "linear-gradient(135deg,#f58529,#dd2a7b,#8134af)" },
+  { icon: "📺", label: "YouTube",  bg: "linear-gradient(135deg,#ff0000,#cc0000)" },
+  { icon: "📍", label: "Maps",     bg: "linear-gradient(135deg,#4285f4,#0f9d58)" },
+  { icon: "📷", label: "Camera",   bg: "linear-gradient(135deg,#1a1a1a,#555)" },
+];
+
 function HeroAnimation() {
-  const canvasRef      = useRef<HTMLCanvasElement>(null);
-  const canvasWrapRef  = useRef<HTMLDivElement>(null);
-  const phoneRef       = useRef<HTMLDivElement>(null);
-  const phoneShellRef  = useRef<HTMLDivElement>(null);
-  const phoneBodyRef   = useRef<HTMLDivElement>(null);
-  const nodeRefs       = useRef<(HTMLDivElement | null)[]>([null, null, null]);
-  const statusRef      = useRef<HTMLParagraphElement | null>(null);
+  const canvasRef        = useRef<HTMLCanvasElement>(null);
+  const canvasWrapRef    = useRef<HTMLDivElement>(null);
+  const phoneRef         = useRef<HTMLDivElement>(null);
+  const phoneShellRef    = useRef<HTMLDivElement>(null);
+  const phoneBodyRef     = useRef<HTMLDivElement>(null);
+  const phoneOutlynkRef  = useRef<HTMLDivElement>(null);
+  const nodeRefs         = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const statusRef        = useRef<HTMLParagraphElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,10 +54,8 @@ function HeroAnimation() {
 
     const dpr = window.devicePixelRatio || 1;
     const W = 420, H = 420;
-    canvas.width  = W * dpr;
-    canvas.height = H * dpr;
-    canvas.style.width  = `${W}px`;
-    canvas.style.height = `${H}px`;
+    canvas.width  = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = `${W}px`; canvas.style.height = `${H}px`;
     const ctx = canvas.getContext("2d")!;
     ctx.scale(dpr, dpr);
 
@@ -70,90 +78,94 @@ function HeroAnimation() {
       "Outlynk — healthcare in your pocket.",
     ];
 
+    // Canvas coords where hub flies into: dock area of phone
+    // Phone shell: 192×388, centered at (210,210) → top at 16, bottom at 404
+    // Outlynk icon at bottom:22 of shell → center y ≈ 404-22-24 = 358
+    const FLY_X = cx, FLY_Y = 358, FLY_R = 22;
+
     let stepState = 0;
+    let step5Frame = 0;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
 
     const setStep = (s: number) => {
       stepState = s;
-      // clear pending morph timeouts on any step change
-      timeouts.forEach(clearTimeout);
-      timeouts.length = 0;
+      timeouts.forEach(clearTimeout); timeouts.length = 0;
 
       if (statusRef.current) {
         statusRef.current.textContent = STATUS_MSGS[s];
         statusRef.current.style.opacity = s === 0 ? "0" : "1";
-        statusRef.current.style.color =
-          s === 5 ? "#0891b2" : s === 4 ? "#2563eb" : "#64748b";
+        statusRef.current.style.color = s === 5 ? "#0891b2" : s === 4 ? "#2563eb" : "#64748b";
       }
 
       if (s === 5) {
-        // ── hide nodes ──────────────────────────────────────────────
+        step5Frame = 0;
         nodeRefs.current.forEach(el => { if (el) el.style.opacity = "0"; });
 
-        // ── canvas fades fast so hub disappears ─────────────────────
-        const cw = canvasWrapRef.current;
-        if (cw) { cw.style.transition = "opacity 0.22s ease"; cw.style.opacity = "0"; }
-
-        // ── phone starts as a tiny glowing blue circle (= hub) ──────
-        const ph    = phoneRef.current;
-        const shell = phoneShellRef.current;
-        const body  = phoneBodyRef.current;
-        if (ph && shell && body) {
-          body.style.transition  = "none";
-          body.style.opacity     = "0";
-
-          ph.style.transition    = "none";
-          ph.style.opacity       = "1";
-          ph.style.transform     = "translate(-50%,-50%) scale(0.17)";
-
-          shell.style.transition  = "none";
-          shell.style.borderRadius = "50%";
-          shell.style.background  = "linear-gradient(135deg, #60a5fa 0%, #0891b2 100%)";
-          shell.style.border      = "none";
-          shell.style.boxShadow   =
-            "0 0 0 10px rgba(96,165,250,0.3), 0 0 55px rgba(59,130,246,0.6)";
+        // Phone appears as tiny blue circle matching hub
+        const ph = phoneRef.current, shell = phoneShellRef.current;
+        const body = phoneBodyRef.current, outlynk = phoneOutlynkRef.current;
+        if (ph && shell && body && outlynk) {
+          body.style.transition = "none"; body.style.opacity = "0";
+          outlynk.style.transition = "none"; outlynk.style.opacity = "0";
+          outlynk.style.transform = "translateX(-50%) scale(0.2)";
+          ph.style.transition = "none"; ph.style.opacity = "1";
+          ph.style.transform = "translate(-50%,-50%) scale(0.17)";
+          shell.style.transition = "none"; shell.style.borderRadius = "50%";
+          shell.style.background = "linear-gradient(135deg,#60a5fa,#0891b2)";
+          shell.style.border = "none";
+          shell.style.boxShadow = "0 0 0 10px rgba(96,165,250,0.3),0 0 55px rgba(59,130,246,0.6)";
         }
 
-        // ── 80 ms later: grow + morph into phone ────────────────────
+        // 80ms: phone shell expands and morphs
         timeouts.push(setTimeout(() => {
-          const ph2    = phoneRef.current;
-          const shell2 = phoneShellRef.current;
+          const ph2 = phoneRef.current, shell2 = phoneShellRef.current;
           if (!ph2 || !shell2) return;
-
-          ph2.style.transition   = "transform 0.82s cubic-bezier(0.34,1.56,0.64,1)";
-          ph2.style.transform    = "translate(-50%,-50%) scale(1)";
-
+          ph2.style.transition = "transform 0.82s cubic-bezier(0.34,1.56,0.64,1)";
+          ph2.style.transform = "translate(-50%,-50%) scale(1)";
           shell2.style.transition =
-            "border-radius 0.7s ease 0.12s, background 0.55s ease 0.18s, " +
-            "border 0.4s ease 0.22s, box-shadow 0.55s ease 0.18s";
-          shell2.style.borderRadius = "40px";
-          shell2.style.background   = "#0f172a";
-          shell2.style.border       = "6px solid #1e293b";
-          shell2.style.boxShadow    =
-            "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), " +
+            "border-radius 0.7s ease 0.12s,background 0.55s ease 0.18s," +
+            "border 0.4s ease 0.22s,box-shadow 0.55s ease 0.18s";
+          shell2.style.borderRadius = "40px"; shell2.style.background = "#0f172a";
+          shell2.style.border = "6px solid #1e293b";
+          shell2.style.boxShadow =
+            "0 32px 80px rgba(15,23,42,0.45),0 0 0 1px rgba(255,255,255,0.06)," +
             "inset 0 0 0 1px rgba(255,255,255,0.07)";
         }, 80));
 
-        // ── 800 ms later: fade in screen content ────────────────────
+        // ~950ms: hub has arrived → Outlynk icon springs into dock + canvas fades
+        timeouts.push(setTimeout(() => {
+          const outlynk2 = phoneOutlynkRef.current;
+          if (outlynk2) {
+            outlynk2.style.transition =
+              "transform 0.45s cubic-bezier(0.34,1.56,0.64,1),opacity 0.25s ease";
+            outlynk2.style.transform = "translateX(-50%) scale(1)";
+            outlynk2.style.opacity = "1";
+          }
+          const cw = canvasWrapRef.current;
+          if (cw) { cw.style.transition = "opacity 0.3s ease"; cw.style.opacity = "0"; }
+        }, 950));
+
+        // 1200ms: rest of apps fade in
         timeouts.push(setTimeout(() => {
           const body2 = phoneBodyRef.current;
           if (body2) { body2.style.transition = "opacity 0.55s ease"; body2.style.opacity = "1"; }
-        }, 800));
+        }, 1200));
 
       } else {
-        // ── reset: hide phone, restore canvas ───────────────────────
         const cw = canvasWrapRef.current;
         if (cw) { cw.style.transition = "none"; cw.style.opacity = "1"; }
-
-        const ph   = phoneRef.current;
-        const body = phoneBodyRef.current;
-        if (ph)   { ph.style.transition = "none"; ph.style.opacity = "0"; }
+        const ph = phoneRef.current, body = phoneBodyRef.current;
+        const outlynk = phoneOutlynkRef.current;
+        if (ph) { ph.style.transition = "none"; ph.style.opacity = "0"; }
         if (body) { body.style.transition = "none"; body.style.opacity = "0"; }
-
+        if (outlynk) {
+          outlynk.style.transition = "none"; outlynk.style.opacity = "0";
+          outlynk.style.transform = "translateX(-50%) scale(0.2)";
+        }
         nodeRefs.current.forEach((el, i) => {
           if (!el) return;
-          el.style.opacity     = s > i ? "1" : "0";
-          el.style.transform   = `translate(-50%, -50%) scale(${s > i ? 1 : 0.6})`;
+          el.style.opacity = s > i ? "1" : "0";
+          el.style.transform = `translate(-50%,-50%) scale(${s > i ? 1 : 0.6})`;
           el.style.borderColor = s > i ? "rgba(96,165,250,0.7)" : "rgba(219,234,254,0.6)";
         });
       }
@@ -161,122 +173,127 @@ function HeroAnimation() {
 
     let angle = 0, frame = 0;
     let animId: number;
-
-    // milestones: -, connect1, connect2, connect3, all-glow, phone, reset
-    const STEPS_AT = [0, 22, 80, 138, 196, 290, 470];
+    const STEPS_AT = [0, 22, 80, 138, 196, 290, 490];
 
     const tick = () => {
       ctx.clearRect(0, 0, W, H);
 
+      // particles
       for (let i = 0; i < N; i++) {
-        px[i] = (px[i] + pvx[i] + W) % W;
-        py[i] = (py[i] + pvy[i] + H) % H;
-        ctx.beginPath();
-        ctx.arc(px[i], py[i], pr[i], 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(147,197,253,0.45)";
-        ctx.fill();
+        px[i] = (px[i] + pvx[i] + W) % W; py[i] = (py[i] + pvy[i] + H) % H;
+        ctx.beginPath(); ctx.arc(px[i], py[i], pr[i], 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(147,197,253,0.45)"; ctx.fill();
       }
 
-      for (let i = 0; i < N; i++) {
-        for (let j = i + 1; j < N; j++) {
-          const dx = px[i] - px[j], dy = py[i] - py[j];
-          const d  = Math.sqrt(dx * dx + dy * dy);
-          if (d < 75) {
-            ctx.beginPath();
-            ctx.moveTo(px[i], py[i]);
-            ctx.lineTo(px[j], py[j]);
-            ctx.strokeStyle = `rgba(147,197,253,${0.13 * (1 - d / 75)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
+      // particle connections
+      for (let i = 0; i < N; i++) for (let j = i + 1; j < N; j++) {
+        const dx = px[i]-px[j], dy = py[i]-py[j], d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 75) {
+          ctx.beginPath(); ctx.moveTo(px[i],py[i]); ctx.lineTo(px[j],py[j]);
+          ctx.strokeStyle = `rgba(147,197,253,${0.13*(1-d/75)})`; ctx.lineWidth = 0.5; ctx.stroke();
         }
       }
 
-      [[OR, [6,4], 0.28], [OR*0.68, [], 0.16], [OR*0.42, [3,4], 0.1]].forEach(([r, dash, alpha]) => {
-        ctx.beginPath();
-        ctx.arc(cx, cy, r as number, 0, Math.PI * 2);
-        ctx.setLineDash(dash as number[]);
-        ctx.strokeStyle = `rgba(147,197,253,${alpha})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.setLineDash([]);
+      // orbit rings
+      [[OR,[6,4],0.28],[OR*.68,[],0.16],[OR*.42,[3,4],0.1]].forEach(([r,dash,alpha]) => {
+        ctx.beginPath(); ctx.arc(cx,cy,r as number,0,Math.PI*2);
+        ctx.setLineDash(dash as number[]); ctx.strokeStyle = `rgba(147,197,253,${alpha})`;
+        ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
       });
 
+      // node positions
       angle += 0.22;
       const hx: number[] = [], hy: number[] = [];
       HUB_OFFSETS.forEach((off, i) => {
-        const a = ((angle + off) * Math.PI) / 180;
-        hx[i] = cx + Math.cos(a) * OR;
-        hy[i] = cy + Math.sin(a) * OR;
+        const a = ((angle+off)*Math.PI)/180;
+        hx[i] = cx+Math.cos(a)*OR; hy[i] = cy+Math.sin(a)*OR;
         const el = nodeRefs.current[i];
         if (el) { el.style.left = `${hx[i]}px`; el.style.top = `${hy[i]}px`; }
       });
 
-      for (let i = 0; i < 3; i++) {
-        if (stepState > i && stepState < 5) {
-          ctx.beginPath();
-          ctx.moveTo(hx[i], hy[i]);
-          ctx.lineTo(cx, cy);
-          const g = ctx.createLinearGradient(hx[i], hy[i], cx, cy);
-          g.addColorStop(0, "rgba(96,165,250,0.55)");
-          g.addColorStop(1, "rgba(6,182,212,0.75)");
-          ctx.strokeStyle = g;
-          ctx.lineWidth = 1.8;
-          ctx.stroke();
-        }
+      // connection lines
+      for (let i = 0; i < 3; i++) if (stepState > i && stepState < 5) {
+        ctx.beginPath(); ctx.moveTo(hx[i],hy[i]); ctx.lineTo(cx,cy);
+        const g = ctx.createLinearGradient(hx[i],hy[i],cx,cy);
+        g.addColorStop(0,"rgba(96,165,250,0.55)"); g.addColorStop(1,"rgba(6,182,212,0.75)");
+        ctx.strokeStyle = g; ctx.lineWidth = 1.8; ctx.stroke();
       }
 
-      for (let i = packets.length - 1; i >= 0; i--) {
+      // data packets
+      for (let i = packets.length-1; i >= 0; i--) {
         packets[i].t += 0.024;
-        if (packets[i].t >= 1) { packets.splice(i, 1); continue; }
-        const hi = packets[i].hi;
-        const t  = packets[i].t;
-        const ppx = hx[hi] + (cx - hx[hi]) * t;
-        const ppy = hy[hi] + (cy - hy[hi]) * t;
-        const g2 = ctx.createRadialGradient(ppx, ppy, 0, ppx, ppy, 8);
-        g2.addColorStop(0, "rgba(59,130,246,0.9)");
-        g2.addColorStop(1, "rgba(59,130,246,0)");
-        ctx.beginPath(); ctx.arc(ppx, ppy, 8, 0, Math.PI * 2);
-        ctx.fillStyle = g2; ctx.fill();
-        ctx.beginPath(); ctx.arc(ppx, ppy, 2.8, 0, Math.PI * 2);
-        ctx.fillStyle = "white"; ctx.fill();
+        if (packets[i].t >= 1) { packets.splice(i,1); continue; }
+        const hi = packets[i].hi, t = packets[i].t;
+        const ppx = hx[hi]+(cx-hx[hi])*t, ppy = hy[hi]+(cy-hy[hi])*t;
+        const g2 = ctx.createRadialGradient(ppx,ppy,0,ppx,ppy,8);
+        g2.addColorStop(0,"rgba(59,130,246,0.9)"); g2.addColorStop(1,"rgba(59,130,246,0)");
+        ctx.beginPath(); ctx.arc(ppx,ppy,8,0,Math.PI*2); ctx.fillStyle = g2; ctx.fill();
+        ctx.beginPath(); ctx.arc(ppx,ppy,2.8,0,Math.PI*2); ctx.fillStyle = "white"; ctx.fill();
       }
-      if (frame % 72 === 36 && stepState > 0 && stepState < 5) {
-        packets.push({ t: 0, hi: Math.floor(Math.random() * Math.min(stepState, 3)) });
-      }
+      if (frame%72===36 && stepState>0 && stepState<5)
+        packets.push({ t:0, hi:Math.floor(Math.random()*Math.min(stepState,3)) });
 
-      const pulse = 0.75 + 0.25 * Math.sin(frame * 0.055);
-      const glowR = stepState === 4 ? 58 * pulse : 44;
-      const cg0 = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
-      cg0.addColorStop(0, `rgba(59,130,246,${stepState === 4 ? 0.5 * pulse : 0.22})`);
-      cg0.addColorStop(1, "rgba(59,130,246,0)");
-      ctx.beginPath(); ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
-      ctx.fillStyle = cg0; ctx.fill();
+      const pulse = 0.75 + 0.25*Math.sin(frame*0.055);
 
-      if (stepState === 4) {
-        ctx.beginPath();
-        ctx.arc(cx, cy, 38 + 10 * (1 - pulse), 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(96,165,250,${0.4 * pulse})`;
-        ctx.lineWidth = 2; ctx.stroke();
-      }
+      if (stepState === 5) {
+        // ── Hub flies from center down into phone dock ──────────────
+        step5Frame++;
+        const t = Math.min(step5Frame / 57, 1);
+        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease-in-out
 
-      // hub — hidden during step 5 (canvas is opacity 0 by then)
-      if (stepState < 5) {
-        const hubG = ctx.createLinearGradient(cx - 30, cy - 30, cx + 30, cy + 30);
-        hubG.addColorStop(0, "#60a5fa");
-        hubG.addColorStop(1, "#0891b2");
-        ctx.beginPath(); ctx.arc(cx, cy, 32, 0, Math.PI * 2);
-        ctx.fillStyle = hubG;
-        ctx.shadowColor = "rgba(59,130,246,0.65)";
-        ctx.shadowBlur = 20;
-        ctx.fill();
+        const hubX = cx + (FLY_X - cx) * ease;
+        const hubY = cy + (FLY_Y - cy) * ease;
+        const hubR = 32 + (FLY_R - 32) * ease;
+        const alpha = 1 - ease * 0.35;
+
+        // glow behind flying hub
+        const glow = ctx.createRadialGradient(hubX,hubY,0,hubX,hubY,hubR*2);
+        glow.addColorStop(0,`rgba(59,130,246,${0.38*alpha})`);
+        glow.addColorStop(1,"rgba(59,130,246,0)");
+        ctx.beginPath(); ctx.arc(hubX,hubY,hubR*2,0,Math.PI*2);
+        ctx.fillStyle = glow; ctx.fill();
+
+        // hub circle
+        const hg = ctx.createLinearGradient(hubX-hubR,hubY-hubR,hubX+hubR,hubY+hubR);
+        hg.addColorStop(0,"#60a5fa"); hg.addColorStop(1,"#0891b2");
+        ctx.beginPath(); ctx.arc(hubX,hubY,hubR,0,Math.PI*2);
+        ctx.fillStyle = hg; ctx.shadowColor = `rgba(59,130,246,${0.65*alpha})`;
+        ctx.shadowBlur = 18; ctx.globalAlpha = alpha; ctx.fill();
+        ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+
+        if (hubR > 10) {
+          const sc = hubR / 32;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = "rgba(255,255,255,0.96)";
+          ctx.font = `bold ${7.5*sc}px system-ui,sans-serif`;
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText("OUT",  hubX, hubY - 5.5*sc);
+          ctx.fillText("LYNK", hubX, hubY + 5.5*sc);
+          ctx.globalAlpha = 1;
+        }
+
+      } else {
+        // ── Normal center glow + hub ────────────────────────────────
+        const glowR = stepState === 4 ? 58*pulse : 44;
+        const cg = ctx.createRadialGradient(cx,cy,0,cx,cy,glowR);
+        cg.addColorStop(0,`rgba(59,130,246,${stepState===4 ? 0.5*pulse : 0.22})`);
+        cg.addColorStop(1,"rgba(59,130,246,0)");
+        ctx.beginPath(); ctx.arc(cx,cy,glowR,0,Math.PI*2); ctx.fillStyle = cg; ctx.fill();
+
+        if (stepState === 4) {
+          ctx.beginPath(); ctx.arc(cx,cy,38+10*(1-pulse),0,Math.PI*2);
+          ctx.strokeStyle = `rgba(96,165,250,${0.4*pulse})`; ctx.lineWidth = 2; ctx.stroke();
+        }
+
+        const hubG = ctx.createLinearGradient(cx-30,cy-30,cx+30,cy+30);
+        hubG.addColorStop(0,"#60a5fa"); hubG.addColorStop(1,"#0891b2");
+        ctx.beginPath(); ctx.arc(cx,cy,32,0,Math.PI*2); ctx.fillStyle = hubG;
+        ctx.shadowColor = "rgba(59,130,246,0.65)"; ctx.shadowBlur = 20; ctx.fill();
         ctx.shadowBlur = 0;
         ctx.fillStyle = "rgba(255,255,255,0.96)";
-        ctx.font = "bold 7.5px system-ui, sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("OUT",  cx, cy - 5.5);
-        ctx.fillText("LYNK", cx, cy + 5.5);
+        ctx.font = "bold 7.5px system-ui,sans-serif";
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("OUT",cx,cy-5.5); ctx.fillText("LYNK",cx,cy+5.5);
       }
 
       frame++;
@@ -285,7 +302,7 @@ function HeroAnimation() {
       else if (frame === STEPS_AT[3]) setStep(3);
       else if (frame === STEPS_AT[4]) setStep(4);
       else if (frame === STEPS_AT[5]) setStep(5);
-      else if (frame >= STEPS_AT[6]) { setStep(0); frame = 0; packets.length = 0; }
+      else if (frame >= STEPS_AT[6]) { setStep(0); frame=0; step5Frame=0; packets.length=0; }
 
       animId = requestAnimationFrame(tick);
     };
@@ -301,128 +318,87 @@ function HeroAnimation() {
         {/* Canvas + node cards */}
         <div ref={canvasWrapRef} className="absolute inset-0">
           <canvas ref={canvasRef} className="absolute inset-0" />
-
           {[
             { icon: "🙋", label: "Patient" },
             { icon: "🔬", label: "Lab" },
             { icon: "🩺", label: "Doctor" },
           ].map((card, i) => (
-            <div
-              key={card.label}
-              ref={el => { nodeRefs.current[i] = el; }}
+            <div key={card.label} ref={el => { nodeRefs.current[i] = el; }}
               className="absolute pointer-events-none"
-              style={{
-                left: 210, top: 210,
-                transform: "translate(-50%, -50%) scale(0.6)",
-                opacity: 0,
-                transition: "opacity 0.45s ease, transform 0.45s cubic-bezier(0.34,1.56,0.64,1), border-color 0.3s ease",
-              }}
-            >
+              style={{ left:210, top:210, transform:"translate(-50%,-50%) scale(0.6)", opacity:0,
+                transition:"opacity 0.45s ease,transform 0.45s cubic-bezier(0.34,1.56,0.64,1),border-color 0.3s ease" }}>
               <div className="bg-white/95 backdrop-blur-sm rounded-xl flex flex-col items-center gap-0.5 border shadow-lg shadow-blue-100/70"
-                style={{ padding: "7px 10px", width: 64, borderColor: "rgba(219,234,254,0.6)" }}>
-                <span style={{ fontSize: 22 }}>{card.icon}</span>
+                style={{ padding:"7px 10px", width:64, borderColor:"rgba(219,234,254,0.6)" }}>
+                <span style={{ fontSize:22 }}>{card.icon}</span>
                 <span className="text-[9px] font-bold text-slate-600">{card.label}</span>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Phone — starts as tiny blue circle at center, morphs into phone */}
-        <div
-          ref={phoneRef}
-          className="absolute pointer-events-none"
-          style={{ top: "50%", left: "50%", transform: "translate(-50%,-50%) scale(0.17)", opacity: 0 }}
-        >
-          {/* Shell — morphs from circle to phone body */}
-          <div
-            ref={phoneShellRef}
-            style={{
-              width: 192, height: 388,
-              background: "#0f172a",
-              borderRadius: 40,
-              border: "6px solid #1e293b",
-              boxShadow: "0 32px 80px rgba(15,23,42,0.45), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.07)",
-              position: "relative",
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+        {/* Phone */}
+        <div ref={phoneRef} className="absolute pointer-events-none"
+          style={{ top:"50%", left:"50%", transform:"translate(-50%,-50%) scale(0.17)", opacity:0 }}>
+          <div ref={phoneShellRef} style={{
+            width:192, height:388, background:"#0f172a", borderRadius:40,
+            border:"6px solid #1e293b", position:"relative", overflow:"hidden",
+            display:"flex", flexDirection:"column",
+            boxShadow:"0 32px 80px rgba(15,23,42,0.45),0 0 0 1px rgba(255,255,255,0.06),inset 0 0 0 1px rgba(255,255,255,0.07)",
+          }}>
             {/* Dynamic island */}
-            <div style={{
-              width: 76, height: 22, background: "#000",
-              borderRadius: 12, margin: "9px auto 0", flexShrink: 0,
-            }} />
+            <div style={{ width:76, height:22, background:"#000", borderRadius:12, margin:"9px auto 0", flexShrink:0 }} />
 
-            {/* Screen — home screen with app icons */}
+            {/* Home screen — other apps, fades in after Outlynk lands */}
             <div ref={phoneBodyRef} style={{
-              flex: 1,
-              background: "linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 40%, #0891b2 100%)",
-              margin: "6px 0 0", borderRadius: "0 0 34px 34px",
-              overflow: "hidden", display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center",
-              opacity: 0, padding: "10px 0 18px",
+              flex:1, background:"linear-gradient(160deg,#1e3a8a 0%,#1d4ed8 45%,#0891b2 100%)",
+              margin:"6px 0 0", borderRadius:"0 0 34px 34px", overflow:"hidden",
+              display:"flex", flexDirection:"column", alignItems:"center",
+              padding:"8px 0 68px", opacity:0,
             }}>
-              {/* Time */}
-              <div style={{ color: "rgba(255,255,255,0.9)", fontSize: 22, fontWeight: 700, marginBottom: 2 }}>9:41</div>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 7.5, marginBottom: 18 }}>Thursday, 17 April</div>
-
-              {/* App icon grid */}
-              {[
-                [
-                  { icon: "🙋", label: "Patients",  bg: "linear-gradient(135deg,#3b82f6,#2563eb)" },
-                  { icon: "🩺", label: "Doctors",   bg: "linear-gradient(135deg,#06b6d4,#0891b2)" },
-                  { icon: "🔬", label: "Labs",      bg: "linear-gradient(135deg,#8b5cf6,#6d28d9)" },
-                ],
-                [
-                  { icon: "📋", label: "Reports",   bg: "linear-gradient(135deg,#10b981,#059669)" },
-                  { icon: "💊", label: "Meds",      bg: "linear-gradient(135deg,#f59e0b,#d97706)" },
-                  { icon: "🏥", label: "Hospitals", bg: "linear-gradient(135deg,#ef4444,#dc2626)" },
-                ],
-              ].map((row, ri) => (
-                <div key={ri} style={{ display: "flex", gap: 14, marginBottom: 14 }}>
-                  {row.map(app => (
-                    <div key={app.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <div style={{ color:"rgba(255,255,255,0.9)", fontSize:22, fontWeight:700, marginBottom:2 }}>9:41</div>
+              <div style={{ color:"rgba(255,255,255,0.5)", fontSize:7.5, marginBottom:16 }}>Thursday, 17 April</div>
+              {/* 3×2 grid of everyday apps */}
+              {[[0,1,2],[3,4,5]].map((row, ri) => (
+                <div key={ri} style={{ display:"flex", gap:13, marginBottom:13 }}>
+                  {row.map(idx => (
+                    <div key={idx} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
                       <div style={{
-                        width: 34, height: 34, borderRadius: 9,
-                        background: app.bg,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16,
-                        boxShadow: "0 3px 10px rgba(0,0,0,0.25)",
-                      }}>{app.icon}</div>
-                      <span style={{ color: "rgba(255,255,255,0.82)", fontSize: 6.5, fontWeight: 600 }}>{app.label}</span>
+                        width:36, height:36, borderRadius:9, background:HOME_APPS[idx].bg,
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontSize:16, boxShadow:"0 3px 10px rgba(0,0,0,0.28)",
+                      }}>{HOME_APPS[idx].icon}</div>
+                      <span style={{ color:"rgba(255,255,255,0.8)", fontSize:6.5, fontWeight:600 }}>{HOME_APPS[idx].label}</span>
                     </div>
                   ))}
                 </div>
               ))}
+            </div>
 
-              {/* Outlynk — featured dock icon */}
-              <div style={{ marginTop: 6, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 12,
-                  background: "white",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 0 0 3px rgba(255,255,255,0.35), 0 6px 20px rgba(0,0,0,0.35)",
-                }}>
-                  <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-                    <path d="M9 21 C4 17 4 11 9 7"  stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
-                    <path d="M13 24 C5 19 5 9 13 4" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
-                    <path d="M17 26 C6 20 6 8 17 2" stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
-                  </svg>
-                </div>
-                <span style={{ color: "white", fontSize: 7.5, fontWeight: 800, letterSpacing: "0.04em" }}>outlynk</span>
+            {/* Outlynk dock icon — springs in when hub flies in, z-index above screen */}
+            <div ref={phoneOutlynkRef} style={{
+              position:"absolute", bottom:22, left:"50%",
+              transform:"translateX(-50%) scale(0.2)", opacity:0, zIndex:10,
+              display:"flex", flexDirection:"column", alignItems:"center", gap:4,
+            }}>
+              <div style={{
+                width:44, height:44, borderRadius:12, background:"white",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                boxShadow:"0 0 0 3px rgba(255,255,255,0.4),0 6px 22px rgba(0,0,0,0.4)",
+              }}>
+                <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+                  <path d="M9 21 C4 17 4 11 9 7"  stroke="#2563eb" strokeWidth="3"   strokeLinecap="round"/>
+                  <path d="M13 24 C5 19 5 9 13 4" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round"/>
+                  <path d="M17 26 C6 20 6 8 17 2" stroke="#60a5fa" strokeWidth="2"   strokeLinecap="round"/>
+                </svg>
               </div>
+              <span style={{ color:"white", fontSize:7.5, fontWeight:800, letterSpacing:"0.04em" }}>outlynk</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Status text */}
-      <p
-        ref={statusRef}
-        className="text-xs font-semibold mt-1"
-        style={{ opacity: 0, transition: "opacity 0.4s ease, color 0.4s ease", minHeight: 20 }}
-      />
+      <p ref={statusRef} className="text-xs font-semibold mt-1"
+        style={{ opacity:0, transition:"opacity 0.4s ease,color 0.4s ease", minHeight:20 }} />
     </div>
   );
 }
